@@ -1,0 +1,2 @@
+Checks: 'clang-analyzer-core.*,clang-analyzer-security.FloatLoopCounter,clang-analyzer-security.ArrayBound'
+HeaderFilterRegex: ''

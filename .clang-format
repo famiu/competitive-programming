@@ -1,0 +1,14 @@
+BasedOnStyle: Google
+IndentWidth: 4
+ColumnLimit: 0
+AllowShortFunctionsOnASingleLine: All
+AllowShortIfStatementsOnASingleLine: WithoutElse
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterFunction: true
+  AfterStruct: true
+  AfterControlStatement: Never
+  BeforeElse: false
+PointerAlignment: Left
+SortIncludes: false
