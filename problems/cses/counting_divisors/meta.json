@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "url": "https://cses.fi/alon/task/1713",
+  "name": "Counting Divisors",
+  "site": "cses",
+  "platform": "CSES",
+  "time_limit": 1000.0,
+  "memory_limit": 512
+}
