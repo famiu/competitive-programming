@@ -33,6 +33,10 @@ using i64 = int64_t;
 using u64 = uint64_t;
 using ll = long long;
 using ull = unsigned long long;
+template <typename To, typename From>
+constexpr To sc(From&& from) {
+    return static_cast<To>(std::forward<From>(from));
+}
 
 int main()
 {
