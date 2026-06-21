@@ -8,6 +8,9 @@ static constexpr inline uint32_t sqrt_flr(uint32_t n)
 }
 
 int main() {
+    ios::sync_with_stdio(false);
+    cin.tie(nullptr);
+
     constexpr uint32_t MAX_VAL = 1000000;
     bitset<MAX_VAL + 1> sieve;
     sieve.set();

@@ -76,6 +76,9 @@ verify_check() {
         python)  python3 "$CHECKER_TARGET/checker.py" "$input_f" "$expected_f" "$actual_f" > "$diagnostics_f" 2>&1 ;;
         cpp)     "$CHECKER_BIN" "$input_f" "$expected_f" "$actual_f" > "$diagnostics_f" 2>&1 ;;
         diff)
+            if cmp -s "$expected_f" "$actual_f"; then
+                return 0
+            fi
             diff <(normalize "$expected_f") <(normalize "$actual_f") > "$diff_preview_f" 2>/dev/null
             local diff_status=$?
             if [[ $diff_status -ne 0 ]]; then
@@ -88,12 +91,12 @@ verify_check() {
 }
 
 normalize() {
-    awk '{ sub(/[[:space:]]+$/, ""); lines[NR] = $0 }
-         END {
-             n = NR
-             while (n > 0 && lines[n] == "") n--
-             for (i = 1; i <= n; i++) print lines[i]
-         }' "$1"
+    local limit
+    limit=$(awk '/[^[:space:]]/ { last = NR } END { print last + 0 }' "$1")
+    if [[ -z "$limit" || "$limit" -eq 0 ]]; then
+        return 0
+    fi
+    awk -v limit="$limit" 'NR <= limit { sub(/[[:space:]]+$/, ""); print }' "$1"
 }
 
 read_compile_flags() {
