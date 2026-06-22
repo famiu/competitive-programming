@@ -1,4 +1,5 @@
 #include <bits/stdc++.h>
+#include <print>
 using namespace std;
 
 #ifndef NDEBUG
