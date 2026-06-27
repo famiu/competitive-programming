@@ -1,6 +1,6 @@
 # A - Secret Numbers
 
-**Time limit:** 2 s | **Memory limit:** 1024 MB | **Platform**: AtCoder
+**Time limit:** 2 s | **Memory limit:** 1024 MB | **Platform:** AtCoder
 
 ---
 

@@ -6,7 +6,7 @@ repo_root := justfile_directory()
 bin := repo_root / ".bin"
 templates := repo_root / "templates"
 problems := repo_root / "problems"
-fetch_problem_cmd := "uvx --from git+https://github.com/famiu/cpfetch cpfetch"
+cpfetch_cmd := "uvx --from git+https://github.com/famiu/cpfetch cpfetch"
 
 # ── Configuration ─────────────────────────────────────────────────────────────
 diff_preview_lines := env("DIFF_PREVIEW_LINES", "80")
@@ -44,7 +44,7 @@ new path=".":
     set -euo pipefail
     target="{{ path }}"
     if [[ "$target" =~ ^https?:// ]]; then
-        dir="$({{ fetch_problem_cmd }} --url "$target" --nest --out-dir "{{ problems }}")"
+        dir="$({{ cpfetch_cmd }} fetch "$target" --nest --out-dir "{{ problems }}")"
         just --justfile "{{ justfile() }}" _scaffold "problem" "$dir"
     else
         just --justfile "{{ justfile() }}" _scaffold "problem" "{{ path }}"
@@ -57,11 +57,11 @@ gen-stress path=".": (_scaffold "stress" path)
 # Fetch problem statement + tests into an arbitrary directory
 [no-cd]
 fetch url dir=".":
-    {{ fetch_problem_cmd }} --url "{{ url }}" --out-dir "{{ dir }}"
+    {{ cpfetch_cmd }} fetch "{{ url }}" --out-dir "{{ dir }}"
 
 # Re-render problem.md for all existing problems from .meta.json
 refetch-all:
-    {{ fetch_problem_cmd }} --all --problems-dir "{{ problems }}"
+    {{ cpfetch_cmd }} refetch --problems-dir "{{ problems }}"
 
 # Show problem metadata (name, platform, limits, URL)
 [no-cd]
@@ -222,8 +222,8 @@ clean path="":
 
 # Install Python tools and Playwright Chromium
 install_fetch_deps:
-    {{ fetch_problem_cmd }} --help
-    uvx --from git+https://github.com/famiu/cpfetch playwright install chromium
+    {{ cpfetch_cmd }} --help
+    uvx --from git+https://github.com/famiu/cpfetch cpfetch setup
 
 # ── Private Implementations ───────────────────────────────────────────────────
 

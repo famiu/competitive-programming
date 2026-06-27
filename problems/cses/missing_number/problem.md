@@ -1,6 +1,6 @@
 # Missing Number
 
-**Time limit:** 1 s | **Memory limit:** 512 MB | **Platform**: CSES
+**Time limit:** 1 s | **Memory limit:** 512 MB | **Platform:** CSES
 
 ---
 
