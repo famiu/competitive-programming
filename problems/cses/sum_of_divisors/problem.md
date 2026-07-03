@@ -18,7 +18,7 @@ Print $\sum_{i=1}^n \sigma(i)$ modulo $10^9+7$.
 
 ## Constraints
 
-* $1 \le{} n \le{} 10^{12}$
+* $1 \le n \le 10^{12}$
 
 ## Examples
 

@@ -20,8 +20,8 @@ For each integer, print the number of its divisors.
 
 ## Constraints
 
-* $1 \le{} n \le{} 10^5$
-* $1 \le{} x \le{} 10^6$
+* $1 \le n \le 10^5$
+* $1 \le x \le 10^6$
 
 ## Examples
 
