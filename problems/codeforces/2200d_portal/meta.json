@@ -3,6 +3,7 @@
   "name": "D. Portal",
   "site": "codeforces",
   "platform": "Codeforces",
-  "time_limit": 2000.0,
-  "memory_limit": 256
+  "time_limit": 2000,
+  "memory_limit": 256,
+  "interactive": false
 }

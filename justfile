@@ -8,9 +8,6 @@ set positional-arguments
 set no-exit-message
 
 scripts := justfile_directory() / "scripts"
-problems := justfile_directory() / "problems"
-cpfetch_rev := "e88bcfa4bd828614d9f24c8a0d1ce9511c163fc0"
-cpfetch := "uvx --from git+https://github.com/famiu/cpfetch@" + cpfetch_rev + " cpfetch"
 
 [private]
 default:
@@ -18,22 +15,22 @@ default:
 
 # ── Problems ──────────────────────────────────────────────────────────────────
 
-# Fetch problem URLs into problems/<site>/ (or scaffold dirs) and create solution.cpp; prints the dirs
+# Receive problems from Competitive Companion and print their dirs; --once stops after one problem or contest
+[group('problems')]
+listen *args:
+    @'{{ scripts }}/listen.py' "$@"
+
+# Create solution.cpp in a problem directory set up by hand
 [group('problems')]
 [no-cd]
-new *targets:
-    @CPFETCH='{{ cpfetch }}' '{{ scripts }}/scaffold.sh' new "$@"
+new *dirs:
+    @'{{ scripts }}/scaffold.sh' new "$@"
 
-# Fetch one problem's statement and samples into <dir> without scaffolding
+# Open the problem's page in the browser
 [group('problems')]
 [no-cd]
-fetch url dir=".":
-    @{{ cpfetch }} fetch "$1" --out-dir "$2"
-
-# Re-fetch every problem under problems/ from the URL in its meta.json
-[group('problems')]
-refetch-all:
-    @{{ cpfetch }} refetch --problems-dir '{{ problems }}'
+open *args:
+    @'{{ scripts }}/open.sh' "$@"
 
 # Show the problem's name, limits, URL, test count and checker
 [group('problems')]
@@ -136,21 +133,6 @@ gen-flags:
 [group('maintenance')]
 doctor:
     @'{{ scripts }}/doctor.sh'
-
-# Install the Chromium browser cpfetch uses to load problem pages
-[group('maintenance')]
-setup:
-    @{{ cpfetch }} setup
-
-# Pin cpfetch to the latest commit on GitHub
-[group('maintenance')]
-bump-cpfetch:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    rev="$(git ls-remote https://github.com/famiu/cpfetch HEAD | cut -f 1)"
-    [[ "$rev" =~ ^[0-9a-f]{40}$ ]] || { echo "error: could not read cpfetch HEAD" >&2; exit 1; }
-    sed -i "s/^cpfetch_rev := \".*\"/cpfetch_rev := \"$rev\"/" '{{ justfile() }}'
-    echo "cpfetch pinned to $rev"
 
 # Remove build outputs and .stress/ artifacts, for one problem or everything: clean [dir]
 [group('maintenance')]

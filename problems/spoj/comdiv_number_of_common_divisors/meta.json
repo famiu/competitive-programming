@@ -3,6 +3,7 @@
   "name": "COMDIV - Number of common divisors",
   "site": "spoj",
   "platform": "SPOJ",
-  "time_limit": 600.0,
-  "memory_limit": 1536
+  "time_limit": 600,
+  "memory_limit": 1536,
+  "interactive": false
 }

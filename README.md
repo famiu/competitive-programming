@@ -1,26 +1,28 @@
 # Competitive programming
 
-My solutions to competitive programming problems, plus the tooling to fetch, build, test and stress-test them. Problems are fetched using [cpfetch](https://github.com/famiu/cpfetch).
+My solutions to competitive programming problems, plus the tooling to fetch, build, test and stress-test them. Problems are fetched using the [Competitive Companion](https://github.com/jmerle/competitive-companion) browser extension.
 
 ## Setup
 
 ```sh
 just doctor   # check that the required tools are installed
-just setup    # install the Chromium browser cpfetch uses
 ```
+
+Install Competitive Companion in the browser. It sends problems to port 1327 by default, which is what `just listen` uses (`CP_LISTEN_PORT` to change it).
 
 ## Usage
 
 ```sh
-cd "$(just new https://codeforces.com/problemset/problem/4/A)"
+cd "$(just listen --once)"   # then click Competitive Companion on the problem page
 just test          # build and check every sample
 just test 02       # one test; names and globs work, e.g. 'custom_*'
 just run 02        # debug build on tests/02.in, with dbg() output
 just add-test      # paste a new input (and expected output) as tests/custom_NN
+just open          # open the problem page
 just copy          # put solution.cpp on the clipboard to submit
 ```
 
-`just new` fetches each URL into `problems/<site>/<problem>/`, creates `solution.cpp` from `templates/solution.cpp` and prints the problem directories on stdout. It also accepts several URLs at once, or a local directory to scaffold without fetching.
+`just listen` writes each problem it receives to `problems/<site>/<id>_<name>/` (e.g. `codeforces/2200d_portal`) with `meta.json`, the samples and `solution.cpp` from `templates/solution.cpp`, and prints the directory. Clicking on a contest page sends the whole contest. Without `--once` it keeps listening until Ctrl-C. Receiving a problem again only replaces `meta.json` and the numbered samples.
 
 Recipes find the problem by walking up from the current directory to the nearest folder that contains `solution.cpp` or `meta.json`, so they work from anywhere inside a problem, including `tests/`. Passing a directory as the first argument selects a different problem. `just` with no arguments lists every recipe.
 
@@ -29,10 +31,9 @@ Recipes find the problem by walking up from the current directory to the nearest
 ```text
 problems/<site>/<problem>/
 ├── solution.cpp
-├── problem.md        statement (cpfetch)
-├── meta.json         URL, name and limits (cpfetch)
+├── meta.json         URL, name, limits, interactive
 ├── tests/
-│   ├── 01.in, 01.out             samples (cpfetch)
+│   ├── 01.in, 01.out             samples
 │   ├── custom_01.in, .out        from `just add-test`
 │   └── stress_01.in, .out        from `just stress-save`
 ├── brute.cpp, generator.cpp      from `just gen-stress`
@@ -41,8 +42,6 @@ problems/<site>/<problem>/
 ├── .compile_flags    extra compiler flags, one or more per line
 └── .no-lint          skips `just lint`
 ```
-
-`just refetch-all` and re-fetching a problem replace `problem.md`, `meta.json` and the numbered samples, and leave every other file alone.
 
 ## Testing
 
@@ -76,7 +75,6 @@ just bench         # time the release build on the largest test
 just info          # limits, test count, checker
 just fmt           # clang-format
 just lint          # clang-tidy
-just bump-cpfetch  # update the pinned cpfetch commit
 ```
 
 ## Environment variables

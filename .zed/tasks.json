@@ -1,5 +1,16 @@
 [
   {
+    "label": "cp: listen",
+    "command": "just",
+    "args": [
+      "listen"
+    ],
+    "cwd": "$ZED_WORKTREE_ROOT",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
     "label": "cp: test",
     "command": "just",
     "args": [

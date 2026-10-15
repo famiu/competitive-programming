@@ -15,6 +15,7 @@ if [[ -f "$dir/meta.json" ]]; then
     printf '  %-14s %s\n' "URL" "$(meta_get "$dir" url)"
     ml="$(meta_get "$dir" memory_limit)"
     [[ -n "$ml" ]] && printf '  %-14s %s MB\n' "Memory limit" "$ml"
+    [[ "$(jq -r '.interactive' "$dir/meta.json")" == true ]] && printf '  %-14s %s\n' "Interactive" "yes"
 else
     printf '%s%s%s %s(no meta.json)%s\n' "$BOLD" "$(basename "$dir")" "$RESET" "$DIM" "$RESET"
 fi

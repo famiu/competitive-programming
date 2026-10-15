@@ -3,6 +3,7 @@
   "name": "A - Secret Numbers",
   "site": "atcoder",
   "platform": "AtCoder",
-  "time_limit": 2000.0,
-  "memory_limit": 1024
+  "time_limit": 2000,
+  "memory_limit": 1024,
+  "interactive": false
 }
