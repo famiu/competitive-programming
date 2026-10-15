@@ -2,6 +2,9 @@
 
 My solutions to competitive programming problems, plus the tooling to fetch, build, test and stress-test them. Problems are fetched using the [Competitive Companion](https://github.com/jmerle/competitive-companion) browser extension.
 
+> [!NOTE]
+> The tooling in this repository includes AI-generated code. I didn't want to spend time perfecting tooling rather than solving problems, which is the fun part for me. All problem solutions are still entirely written by me.
+
 ## Setup
 
 ```sh
