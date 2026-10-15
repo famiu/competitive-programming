@@ -23,7 +23,7 @@ time_limit_factor := env("TIME_LIMIT_FACTOR", "1")
 
 # ── Compile flags ─────────────────────────────────────────────────────────────
 [private]
-_base := "-std=c++23 -Wall -Wextra -Wshadow -Wconversion -pedantic"
+_base := replace(trim(read(repo_root / "compile_flags.txt")), "\n", " ")
 [private]
 _debug := _base + " -O0 -g3 -fno-omit-frame-pointer -fsanitize=address,undefined -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC"
 [private]
@@ -156,17 +156,12 @@ lint path=".":
     fi
     clang-tidy --quiet "${files[@]}" -- {{ _base }}
 
-# Generate root compile_flags.txt and per-problem compile_commands.json for clangd
+# Generate per-problem compile_commands.json for clangd where .compile_flags exists
 gen-flags:
     #!/usr/bin/env bash
     set -euo pipefail
     source "{{ repo_root }}/scripts/colors.sh"
     source "{{ repo_root }}/scripts/check_helper.sh"
-
-    # Root compile_flags.txt (one flag per line, from _base)
-    IFS=' ' read -ra flags <<< "{{ _base }}"
-    printf '%s\n' "${flags[@]}" > "{{ repo_root }}/compile_flags.txt"
-    success_dim "generated: compile_flags.txt"
 
     # Per-problem compile_commands.json (only where .compile_flags exists)
     while IFS= read -r -d '' cf; do
