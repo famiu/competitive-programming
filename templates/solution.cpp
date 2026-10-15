@@ -1,30 +1,46 @@
 #include <bits/stdc++.h>
-#include <print>
 using namespace std;
 
-#ifndef NDEBUG
-#define dbg(...)                                        \
-    do {                                                \
-        string _h = __FILE__ ":" + to_string(__LINE__); \
-        _dbg_impl(_h, __VA_ARGS__);                     \
-    } while (0)
+// dbg(a, b, ...) prints "file:line [a = 1, b = 2]" to stderr in builds that define LOCAL
+// (`just run`, `just test-debug`, `just stress`). It compiles to nothing on the judge.
+#ifdef LOCAL
+#define dbg(...) dbg_print(__FILE__, __LINE__, #__VA_ARGS__ __VA_OPT__(, ) __VA_ARGS__)
 
-void _dbg_impl(const string& header) { println(cerr, "{}", header); }
-
-template <typename T>
-void _dbg_impl(const string& header, T&& first)
+template <typename... Args>
+void dbg_print(string_view file, int line, string_view names, const Args&... args)
 {
-    println(cerr, "{} {}", header, first);
-}
-
-template <typename T, typename... Args>
-void _dbg_impl(const string& header, T&& first, Args&&... rest)
-{
-    print(cerr, "{} {}, ", header, first);
-    _dbg_impl("", forward<Args>(rest)...);
+    file = file.substr(file.find_last_of('/') + 1);
+    print(cerr, "{}:{} [", file, line);
+    [[maybe_unused]] auto next_name = [&]() {
+        int depth = 0;
+        char quote = 0;
+        size_t i = 0;
+        for (; i < names.size(); i++) {
+            char c = names[i];
+            if (quote) {
+                if (c == '\\')
+                    i++;
+                else if (c == quote)
+                    quote = 0;
+                continue;
+            }
+            if (c == '"' || c == '\'') quote = c;
+            if (c == '(' || c == '[' || c == '{') depth++;
+            if (c == ')' || c == ']' || c == '}') depth--;
+            if (c == ',' && depth == 0) break;
+        }
+        string_view name = names.substr(0, i);
+        names.remove_prefix(min(i + 1, names.size()));
+        while (!names.empty() && names.front() == ' ') names.remove_prefix(1);
+        return name;
+    };
+    [[maybe_unused]] const char* sep = "";
+    ((print(cerr, "{}{} = {}", sep, next_name(), args), sep = ", "), ...);
+    println(cerr, "]");
 }
 #else
-#define dbg(...)
+// Unevaluated, so the arguments still count as used but cost nothing.
+#define dbg(...) ((void)sizeof((__VA_OPT__(__VA_ARGS__, ) 0)))
 #endif
 
 // ── Type aliases ──────────────────────────────────────────────────────────────
@@ -34,10 +50,6 @@ using i64 = int64_t;
 using u64 = uint64_t;
 using ll = long long;
 using ull = unsigned long long;
-template <typename To, typename From>
-constexpr To sc(From&& from) {
-    return static_cast<To>(std::forward<From>(from));
-}
 
 int main()
 {
