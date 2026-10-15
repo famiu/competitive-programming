@@ -1,46 +1,38 @@
 #!/usr/bin/env bash
+# Usage: info.sh [dir]
+#
+# Prints the problem's metadata from meta.json and what the tooling will use for it.
 set -euo pipefail
+source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
+source "$SCRIPTS_DIR/check.sh"
 
-SCRIPT_DIR="$(dirname "$(realpath "${BASH_SOURCE[0]}")")"
-REPO_ROOT="$(dirname "$SCRIPT_DIR")"
+parse_problem_args "$@"
+dir="$PROBLEM_DIR"
 
-source "$SCRIPT_DIR/colors.sh"
-source "$SCRIPT_DIR/check_helper.sh"
-
-target="$(realpath -m "${1:-.}")"
-require_in_repo "$target" "$REPO_ROOT"
-
-meta="$target/meta.json"
-if [[ ! -f "$meta" ]]; then
-    error "no meta.json found in $target"
-    exit 1
+if [[ -f "$dir/meta.json" ]]; then
+    printf '%s%s%s\n' "$BOLD" "$(meta_get "$dir" name)" "$RESET"
+    printf '  %-14s %s\n' "Platform" "$(meta_get "$dir" platform)"
+    printf '  %-14s %s\n' "URL" "$(meta_get "$dir" url)"
+    ml="$(meta_get "$dir" memory_limit)"
+    [[ -n "$ml" ]] && printf '  %-14s %s MB\n' "Memory limit" "$ml"
+else
+    printf '%s%s%s %s(no meta.json)%s\n' "$BOLD" "$(basename "$dir")" "$RESET" "$DIM" "$RESET"
 fi
-
-if ! command -v jq &>/dev/null; then
-    error "jq is required to read meta.json"
-    exit 1
-fi
-
-name=$(jq -r '.name // "?"' "$meta")
-site=$(jq -r '.site // "?"' "$meta")
-platform=$(jq -r '.platform // "?"' "$meta")
-url=$(jq -r '.url // "?"' "$meta")
-tl=$(jq -r '.time_limit // 0' "$meta")
-ml=$(jq -r '.memory_limit // 0' "$meta")
-
-printf "${BOLD}%s${RESET}\n" "$name"
-printf "  ${CYAN}Site${RESET}          %s (%s)\n" "$site" "$platform"
-printf "  ${CYAN}URL${RESET}           %s\n" "$url"
-if [[ "$tl" != "0" && "$tl" != "null" ]]; then
-    printf "  ${CYAN}Time limit${RESET}    %s\n" \
-        "$(awk -v tl="$tl" 'BEGIN { printf "%.1f s", tl / 1000 }')"
-fi
-if [[ "$ml" != "0" && "$ml" != "null" ]]; then
-    printf "  ${CYAN}Memory limit${RESET}  %d MB\n" "$ml"
-fi
+printf '  %-14s %ss\n' "Time limit" "$(time_limit "$dir" release)"
 
 shopt -s nullglob
-tests=("$target/tests/"*.in)
-if (( ${#tests[@]} > 0 )); then
-    printf "  ${CYAN}Test cases${RESET}    %d\n" "${#tests[@]}"
+tests=("$dir"/tests/*.in)
+printf '  %-14s %d\n' "Tests" "${#tests[@]}"
+
+if [[ -x "$dir/checker" && -f "$dir/checker" ]]; then
+    checker=checker
+elif [[ -f "$dir/checker.py" ]]; then
+    checker=checker.py
+elif [[ -f "$dir/checker.cpp" ]]; then
+    checker=checker.cpp
+else
+    setup_checker "$dir"
+    checker="built-in ($COMPARE_MODE)"
+    [[ "$COMPARE_MODE" == float ]] && checker="built-in (float, eps $COMPARE_EPS)"
 fi
+printf '  %-14s %s\n' "Checker" "$checker"
