@@ -46,7 +46,9 @@ printf '%sInput:%s %s (%s bytes)\n' "$CYAN" "$RESET" "$input" "$(wc -c < "$input
 times=() peak_kb=0 status=0
 for ((i = 1; i <= runs; i++)); do
     status=0
+    [[ -t 2 ]] && printf '%s  run %d/%d...%s' "$DIM" "$i" "$runs" "$RESET" >&2
     /usr/bin/time -f '%e %M' -o "$tmp/time" timeout "$kill" "$sol_bin" < "$input" > /dev/null 2> "$tmp/err" || status=$?
+    [[ -t 2 ]] && printf '\r\e[K' >&2
     read -r t kb < <(tail -n 1 "$tmp/time")
     times+=("$t")
     ((kb > peak_kb)) && peak_kb="$kb"

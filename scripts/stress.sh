@@ -88,12 +88,18 @@ report_failure() {
 }
 
 if [[ -n "$iterations" ]]; then
+    printf 'running %d iterations with %d jobs...\n' "$iterations" "$jobs"
     run_batch 1 "$iterations" || report_failure
     printf '%spassed %d iterations%s\n' "$GREEN" "$iterations" "$RESET"
     exit 0
 fi
 
 batch=$((jobs * 50)) first=1
+if [[ -t 1 ]]; then
+    printf 'stress testing with %d jobs (Ctrl-C to stop)...' "$jobs"
+else
+    printf 'stress testing with %d jobs\n' "$jobs"
+fi
 while true; do
     run_batch "$first" $((first + batch - 1)) || report_failure
     first=$((first + batch))

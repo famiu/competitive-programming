@@ -26,7 +26,14 @@ fi
 
 sol_bin="$(bin_path debug "$dir" solution)"
 build debug "$dir/solution.cpp" "$sol_bin" "$dir"
+
+# Marks where the build ends and the program starts, so that a program waiting for input
+# does not look like a build that is still running.
 if [[ -n "$input" ]]; then
+    printf '%s── running solution on %s ──%s\n' "$DIM" "$(realpath --relative-to="$PWD" "$input")" "$RESET" >&2
     exec "$sol_bin" < "$input"
+fi
+if [[ -t 0 ]]; then
+    printf '%s── running solution; type the input, then press Ctrl-D ──%s\n' "$GREEN" "$RESET" >&2
 fi
 exec "$sol_bin"
