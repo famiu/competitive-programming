@@ -1,0 +1,74 @@
+[
+  {
+    "label": "cp: test",
+    "command": "just",
+    "args": [
+      "test"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "cp: test-debug",
+    "command": "just",
+    "args": [
+      "test-debug"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "cp: run",
+    "command": "just",
+    "args": [
+      "run"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "cp: bench",
+    "command": "just",
+    "args": [
+      "bench"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "cp: stress",
+    "command": "just",
+    "args": [
+      "stress"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "cp: watch",
+    "command": "just",
+    "args": [
+      "watch"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  }
+]
