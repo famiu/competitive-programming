@@ -1,2 +1,8 @@
-Checks: 'clang-analyzer-core.*,clang-analyzer-security.FloatLoopCounter,clang-analyzer-security.ArrayBound'
+Checks: >
+  clang-analyzer-core.*,
+  clang-analyzer-security.FloatLoopCounter,
+  clang-analyzer-security.ArrayBound,
+  bugprone-implicit-widening-of-multiplication-result,
+  bugprone-integer-division,
+  misc-redundant-expression
 HeaderFilterRegex: ''
