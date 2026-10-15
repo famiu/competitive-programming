@@ -1,0 +1,8 @@
+{
+  "url": "https://www.spoj.com/problems/ETF/",
+  "name": "ETF - Euler Totient Function",
+  "site": "spoj",
+  "platform": "SPOJ",
+  "time_limit": 1000.0,
+  "memory_limit": 1536
+}

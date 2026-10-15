@@ -1,0 +1,8 @@
+{
+  "url": "https://www.spoj.com/problems/DIVSUM/",
+  "name": "DIVSUM - Divisor Summation",
+  "site": "spoj",
+  "platform": "SPOJ",
+  "time_limit": 3000.0,
+  "memory_limit": 1536
+}

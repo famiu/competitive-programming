@@ -1,0 +1,8 @@
+{
+  "url": "https://www.spoj.com/problems/COMDIV/",
+  "name": "COMDIV - Number of common divisors",
+  "site": "spoj",
+  "platform": "SPOJ",
+  "time_limit": 600.0,
+  "memory_limit": 1536
+}
