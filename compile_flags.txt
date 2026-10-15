@@ -3,3 +3,5 @@
 -Wextra
 -Wshadow
 -Wno-sign-compare
+-isystem
+include

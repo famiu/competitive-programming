@@ -179,10 +179,19 @@ describe_status() {
 
 # ── Building ──────────────────────────────────────────────────────────────────
 
+# compile_flags.txt has one argument per line. Paths after -I and -isystem are relative to the
+# repository root, as clangd reads them; builds run elsewhere, so they are made absolute.
 BASE_FLAGS=()
+prev=''
 while IFS= read -r line || [[ -n "$line" ]]; do
-    [[ -z "${line//[[:space:]]/}" || "$line" =~ ^[[:space:]]*# ]] || BASE_FLAGS+=("$line")
+    [[ -z "${line//[[:space:]]/}" || "$line" =~ ^[[:space:]]*# ]] && continue
+    if [[ "$prev" == -I || "$prev" == -isystem ]] && [[ "$line" != /* ]]; then
+        line="$REPO_ROOT/$line"
+    fi
+    BASE_FLAGS+=("$line")
+    prev="$line"
 done < "$REPO_ROOT/compile_flags.txt"
+unset prev
 DEBUG_FLAGS=("${BASE_FLAGS[@]}" -O0 -g3 -fno-omit-frame-pointer
     -fsanitize=address,undefined -fno-sanitize-recover=undefined
     -D_GLIBCXX_DEBUG -D_GLIBCXX_DEBUG_PEDANTIC -DLOCAL)
@@ -218,7 +227,7 @@ ensure_pch() {
     if [[ "$mode" == debug ]]; then flags=("${DEBUG_FLAGS[@]}"); else flags=("${RELEASE_FLAGS[@]}"); fi
     local want
     want="$(compiler_id)"$'\n'"${flags[*]}"
-    if [[ -f "$dir/stamp" && -f "$dir/bits/stdc++.h.gch" && "$(< "$dir/stamp")" == "$want" ]]; then
+    if [[ -f "$dir/stamp" && -f "$dir/bits/stdc++.h.gch" && -f "$dir/bits/stdc++.h" && "$(< "$dir/stamp")" == "$want" ]]; then
         printf '%s\n' "$dir"
         return 0
     fi
@@ -238,6 +247,9 @@ ensure_pch() {
         warn "could not precompile bits/stdc++.h; compiling without it"
         return 0
     fi
+    # GCC can only use the .gch for the first #include <bits/stdc++.h>. Later includes, such as
+    # the one in include/debug.hpp, find this file instead and continue to the real header.
+    printf '#include_next <bits/stdc++.h>\n' > "$tmp/bits/stdc++.h"
     printf '%s' "$want" > "$tmp/stamp"
     rm -rf "$dir"
     mv "$tmp" "$dir"

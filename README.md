@@ -51,11 +51,13 @@ just test-debug    # sanitizers + dbg(), 3x time limit
 just watch         # re-run tests on every change (needs entr)
 ```
 
+`dbg(a, b)` prints the values with their names to stderr in debug builds (`include/debug.hpp`) and compiles to nothing anywhere else.
+
 Verdicts are `PASS`, `WA`, `TLE`, `RE`, and `OUT` (no `.out` file, output is just printed). The time limit comes from `meta.json`, or 2s if there isn't one.
 
 Output is compared line by line, ignoring trailing whitespace. Put `tokens` or `float 1e-6` in `.compare` for token-wise or float-tolerant comparison.
 
-For problems with multiple valid answers, `just gen-checker` creates `checker.cpp`. It's called as `checker <input> <output> <answer>` (testlib order) and accepts by exiting 0. `checker.py` or an executable `checker` work too.
+For problems with multiple valid answers, `just gen-checker` creates `checker.cpp`, using the helpers in `include/checker.hpp`. It's called as `checker <input> <output> <answer>` (testlib order) and accepts by exiting 0. `checker.py` or an executable `checker` work too.
 
 ## Stress testing
 
@@ -66,7 +68,7 @@ just stress 1000   # or for a fixed number of iterations
 just stress-save   # keep the failing case as tests/stress_NN
 ```
 
-The generator gets the iteration number as its seed. Failures go to `.stress/`; `just run .stress/failing.in` reproduces them.
+The generator gets the iteration number as its seed, and `include/gen.hpp` has the random helpers (`rnd`, `rnd_vec`, `rnd_tree`, `rnd_graph`, `out`, …). Failures go to `.stress/`; `just run .stress/failing.in` reproduces them.
 
 ## Other recipes
 
