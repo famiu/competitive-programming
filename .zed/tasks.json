@@ -71,6 +71,17 @@
     "reveal": "always"
   },
   {
+    "label": "cp: stress-save",
+    "command": "just",
+    "args": [
+      "stress-save"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
     "label": "cp: watch",
     "command": "just",
     "args": [
@@ -81,6 +92,31 @@
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
     "reveal": "always"
+  },
+  {
+    "label": "cp: copy",
+    "command": "just",
+    "args": [
+      "copy"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "no_focus",
+    "hide": "on_success"
+  },
+  {
+    "label": "cp: open",
+    "command": "just",
+    "args": [
+      "open"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "no_focus",
+    "hide": "on_success"
   },
   {
     "label": "cp: commit",
