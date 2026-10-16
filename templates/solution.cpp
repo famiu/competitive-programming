@@ -13,5 +13,5 @@ using u64 = uint64_t;
 
 int main()
 {
-    cin.tie(nullptr)->sync_with_stdio(false);
+	cin.tie(nullptr)->sync_with_stdio(false);
 }
