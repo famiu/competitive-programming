@@ -7,9 +7,12 @@ using namespace std;
 #define dbg(...) ((void)sizeof((__VA_OPT__(__VA_ARGS__, ) 0)))
 #endif
 
-using ll = long long;
-using u32 = uint32_t;
-using u64 = uint64_t;
+using i32 = int;
+using i64 = long long;
+using u32 = unsigned int;
+using u64 = unsigned long long;
+using i128 = __int128;
+using u128 = unsigned __int128;
 
 int main()
 {
