@@ -23,6 +23,8 @@ just run 02        # debug build on tests/02.in, with dbg() output
 just add-test      # paste a new input (and expected output) as tests/custom_NN
 just open          # open the problem page
 just copy          # put solution.cpp on the clipboard to submit
+just commit        # commit a newly solved problem as "feat: solve <site>/<problem>"
+just commit-update # commit changes to it later, as "<type>: update <site>/<problem>"
 ```
 
 `just listen` writes each problem it receives to `problems/<site>/<id>_<name>/` (e.g. `codeforces/2200d_portal`) with `meta.json`, the samples and `solution.cpp` from `templates/solution.cpp`, and prints the directory. Clicking on a contest page sends the whole contest. Without `--once` it keeps listening until Ctrl-C. Receiving a problem again only replaces `meta.json` and the numbered samples.

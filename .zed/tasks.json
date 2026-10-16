@@ -81,5 +81,29 @@
     "use_new_terminal": false,
     "allow_concurrent_runs": false,
     "reveal": "always"
+  },
+  {
+    "label": "cp: commit",
+    "command": "just",
+    "args": [
+      "commit"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "cp: commit-update",
+    "command": "just",
+    "args": [
+      "commit-update"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
   }
 ]

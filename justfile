@@ -50,6 +50,18 @@ add-test *args:
 copy *args:
     @'{{ scripts }}/copy.sh' "$@"
 
+# Commit a newly solved problem as "feat: solve <site>/<problem>"; extra arguments go to git commit
+[group('problems')]
+[no-cd]
+commit *args:
+    @'{{ scripts }}/commit.sh' new "$@"
+
+# Commit changes to an already-committed problem, choosing the type in the editor
+[group('problems')]
+[no-cd]
+commit-update *args:
+    @'{{ scripts }}/commit.sh' update "$@"
+
 # ── Running ───────────────────────────────────────────────────────────────────
 
 # Debug-build and run solution.cpp on stdin, a file, or a test name: run [dir] [input]
