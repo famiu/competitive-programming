@@ -1,0 +1,9 @@
+{
+  "url": "https://open.kattis.com/problems/highesthill",
+  "name": "Highest Hill",
+  "site": "kattis",
+  "platform": "Kattis",
+  "time_limit": 1000,
+  "memory_limit": 1024,
+  "interactive": false
+}
