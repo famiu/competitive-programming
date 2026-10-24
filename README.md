@@ -31,6 +31,17 @@ just commit-update # commit changes to it later, as "<type>: update <site>/<prob
 
 Recipes find the problem by walking up from the current directory to the nearest folder that contains `solution.cpp` or `meta.json`, so they work from anywhere inside a problem, including `tests/`. Passing a directory as the first argument selects a different problem. `just` with no arguments lists every recipe.
 
+## Problems set up by hand
+
+```sh
+cd "$(just new -t 1 scratch/foo)"  # solution.cpp, and meta.json with a 1s time limit
+just add-test --sample             # paste a sample's input and output as the next tests/NN
+```
+
+`just new` takes paths relative to the repository root and refuses directories that already have `solution.cpp`. Without `-t`, tests use `DEFAULT_TIME_LIMIT`.
+
+`scratch/` is gitignored. Every recipe except `commit` works in. Problems can be moved from `scratch/` to `problems/` and then committed.
+
 ## Problem directories
 
 ```text
@@ -38,7 +49,7 @@ problems/<site>/<problem>/
 ├── solution.cpp
 ├── meta.json         URL, name, limits, interactive
 ├── tests/
-│   ├── 01.in, 01.out             samples
+│   ├── 01.in, 01.out             samples, from `just listen` or `just add-test --sample`
 │   ├── custom_01.in, .out        from `just add-test`
 │   └── stress_01.in, .out        from `just stress-save`
 ├── brute.cpp, generator.cpp      from `just gen-stress`
@@ -73,7 +84,7 @@ just stress 1000   # or for a fixed number of iterations
 just stress-save   # keep the failing case as tests/stress_NN
 ```
 
-The generator gets the iteration number as its seed, and `include/gen.hpp` has the random helpers (`rnd`, `rnd_vec`, `rnd_tree`, `rnd_graph`, `out`, …). Failures go to `.stress/`; `just run .stress/failing.in` reproduces them.
+The generator gets the iteration number as its seed, and `include/gen.hpp` has the random helpers (`rnd`, `rnd_vec`, `rnd_tree`, `rnd_graph`, `out`, …). Failures go to `.stress/`; `just run .stress/failing.in` reproduces them. `just add-test` fills in an expected output left empty by running `brute.cpp`.
 
 ## Other recipes
 

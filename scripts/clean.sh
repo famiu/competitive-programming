@@ -25,4 +25,4 @@ fi
 while IFS= read -r -d '' path; do
     rm -rf -- "$path"
     note "removed: $path"
-done < <(find "$PROBLEMS_DIR" -type d -name .stress -prune -print0)
+done < <(find "$PROBLEMS_DIR" "$SCRATCH_DIR" -type d -name .stress -prune -print0 2> /dev/null)

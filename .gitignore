@@ -9,3 +9,6 @@
 
 # Generated per-problem clangd databases
 compile_commands.json
+
+# Uncommitted contest work
+/scratch/

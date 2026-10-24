@@ -11,8 +11,10 @@ dir="$PROBLEM_DIR"
 
 if [[ -f "$dir/meta.json" ]]; then
     printf '%s%s%s\n' "$BOLD" "$(meta_get "$dir" name)" "$RESET"
-    printf '  %-14s %s\n' "Platform" "$(meta_get "$dir" platform)"
-    printf '  %-14s %s\n' "URL" "$(meta_get "$dir" url)"
+    for key in Platform URL; do
+        value="$(meta_get "$dir" "${key,,}")"
+        [[ -n "$value" ]] && printf '  %-14s %s\n' "$key" "$value"
+    done
     ml="$(meta_get "$dir" memory_limit)"
     [[ -n "$ml" ]] && printf '  %-14s %s MB\n' "Memory limit" "$ml"
     [[ "$(jq -r '.interactive' "$dir/meta.json")" == true ]] && printf '  %-14s %s\n' "Interactive" "yes"

@@ -20,10 +20,9 @@ default:
 listen *args:
     @'{{ scripts }}/listen.py' "$@"
 
-# Create solution.cpp in a problem directory set up by hand
+# Create problem directories with solution.cpp and print them; paths are relative to the repository root: new [-t seconds] dir...
 [group('problems')]
-[no-cd]
-new *dirs:
+new *args:
     @'{{ scripts }}/scaffold.sh' new "$@"
 
 # Open the problem's page in the browser
@@ -38,7 +37,7 @@ open *args:
 info *args:
     @'{{ scripts }}/info.sh' "$@"
 
-# Add tests/custom_NN from stdin or files; the expected output comes from brute.cpp if present
+# Add tests/custom_NN from stdin or files; an expected output left empty comes from brute.cpp if present. --sample adds the next sample as tests/NN
 [group('problems')]
 [no-cd]
 add-test *args:
