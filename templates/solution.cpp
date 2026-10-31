@@ -15,7 +15,16 @@ using i128 = __int128;
 using u128 = unsigned __int128;
 #endif
 
+void solve()
+{
+}
+
 int main()
 {
 	cin.tie(nullptr)->sync_with_stdio(false);
+
+	int t = 1;
+	cin >> t;
+	while (t--)
+		solve();
 }

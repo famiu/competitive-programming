@@ -30,6 +30,8 @@ just commit-update # commit changes to it later, as "<type>: update <site>/<prob
 
 `just listen` writes each problem it receives to `problems/<site>/<id>_<name>/` (e.g. `codeforces/2200d_portal`) with `meta.json`, the samples and `solution.cpp` from `templates/solution.cpp`, and prints the directory. Clicking on a contest page sends the whole contest. Without `--once` it keeps listening until Ctrl-C. Receiving a problem again only replaces `meta.json` and the numbered samples.
 
+The template reads a test count and calls `solve()` once per test. For problems with a single test, comment out `cin >> t;`.
+
 Recipes find the problem by walking up from the current directory to the nearest folder that contains `solution.cpp` or `meta.json`, so they work from anywhere inside a problem, including `tests/`. Passing a directory as the first argument selects a different problem. `just` with no arguments lists every recipe.
 
 ## Problems set up by hand
