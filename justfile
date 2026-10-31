@@ -54,11 +54,23 @@ info *args:
 add-test *args:
     @'{{ scripts }}/add_test.sh' "$@"
 
+# Run every test and copy solution.cpp to the clipboard only if all of them pass: ship [dir] [--force]
+[group('problems')]
+[no-cd]
+ship *args:
+    @'{{ scripts }}/ship.sh' "$@"
+
 # Copy solution.cpp to the clipboard
 [group('problems')]
 [no-cd]
 copy *args:
     @'{{ scripts }}/copy.sh' "$@"
+
+# Move a problem from scratch/ to problems/ and print where it went: archive [dir] [site name] [--commit]
+[group('problems')]
+[no-cd]
+archive *args:
+    @'{{ scripts }}/archive.sh' "$@"
 
 # Commit a newly solved problem as "feat: solve <site>/<problem>"; extra arguments go to git commit
 [group('problems')]

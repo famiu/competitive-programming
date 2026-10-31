@@ -22,7 +22,8 @@ just test 02       # one test; names and globs work, e.g. 'custom_*'
 just run 02        # debug build on tests/02.in, with dbg() output
 just add-test      # paste a new input (and expected output) as tests/custom_NN
 just open          # open the problem page
-just copy          # put solution.cpp on the clipboard to submit
+just ship          # run every test, and put solution.cpp on the clipboard if all pass
+just copy          # put solution.cpp on the clipboard without testing
 just commit        # commit a newly solved problem as "feat: solve <site>/<problem>"
 just commit-update # commit changes to it later, as "<type>: update <site>/<problem>"
 ```
@@ -40,7 +41,7 @@ just add-test --sample             # paste a sample's input and output as the ne
 
 `just new` takes paths relative to the repository root and refuses directories that already have `solution.cpp`. Without `-t`, tests use `DEFAULT_TIME_LIMIT`.
 
-`scratch/` is gitignored. Every recipe except `commit` works in. Problems can be moved from `scratch/` to `problems/` and then committed.
+`scratch/` is gitignored. Every recipe except `commit` works in. `just archive` moves a problem from `scratch/` to `problems/`; see [Contests](#contests).
 
 `just limit 3` sets the current problem's time limit to 3s, and `just limit 3 512` also sets the memory limit in MB. When a problem has no time limit, `just test` and `just info` say that the default is being used.
 
@@ -58,6 +59,16 @@ Contest problems go to `scratch/<contest>/<letter>/`, so switching problems is `
 `just listen --contest` names the folder after the contest Competitive Companion sends, e.g. `codeforces_round_1000_div_2`, unless a name is given. The letter comes from the problem's name ("A. ", "B - "); names without one use the slugified name instead.
 
 `just contest <name> <count|range>` creates `scratch/<name>/a`, `b`, … for a count (`5`) or a letter range (`a-k`, or `c` for one problem). Problems that already exist are skipped, so a wider range adds only the missing ones. `-t` takes one time limit for every problem it creates; `just limit` sets a different one for a single problem. Samples are added with `just add-test --sample`.
+
+```sh
+just archive                          # move this problem to problems/<site>/<id>_<name>
+just archive bapsoj "Perfect Couple"  # when meta.json has no URL to name it from
+just archive --commit                 # then commit it, as `just commit` does
+```
+
+`just archive` names the problem the same way `just listen` does, from `meta.json`'s URL, site and name. A site and name given on the command line replace the ones in `meta.json`. It keeps `contest` in `meta.json`, removes the contest folder once it is empty, and prints the new directory, so `cd "$(just archive)"` follows the problem. Unsolved problems stay in `scratch/`.
+
+`just ship` stops without copying when a test fails, a test has no expected output, there are no tests, or the problem is interactive; `--force` copies anyway. It also lists leftover `freopen`, `cerr`, `clog` and `#define LOCAL` lines, but still copies.
 
 ## Problem directories
 
