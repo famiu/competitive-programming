@@ -21,7 +21,11 @@ if [[ -f "$dir/meta.json" ]]; then
 else
     printf '%s%s%s %s(no meta.json)%s\n' "$BOLD" "$(basename "$dir")" "$RESET" "$DIM" "$RESET"
 fi
-printf '  %-14s %ss\n' "Time limit" "$(time_limit "$dir" release)"
+printf '  %-14s %ss' "Time limit" "$(time_limit "$dir" release)"
+time_limit_set "$dir" || printf ' %s(default, not set)%s' "$YELLOW" "$RESET"
+printf '\n'
+contest="$(meta_get "$dir" contest)"
+[[ -n "$contest" ]] && printf '  %-14s %s\n' "Contest" "$contest"
 
 shopt -s nullglob
 tests=("$dir"/tests/*.in)

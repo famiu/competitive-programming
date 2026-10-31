@@ -144,6 +144,12 @@ time_limit() {
         }'
 }
 
+# time_limit_set <problem-dir>: succeeds when meta.json has a time limit, so that time_limit
+# does not fall back to DEFAULT_TIME_LIMIT.
+time_limit_set() {
+    [[ -n "$(meta_get "$1" time_limit)" ]]
+}
+
 # kill_after <limit>: how long a run may take before it is killed.
 kill_after() {
     awk -v tl="$1" 'BEGIN { k = tl * 2; if (k < tl + 1) k = tl + 1; v = sprintf("%.3f", k); sub(/\.?0+$/, "", v); print v }'

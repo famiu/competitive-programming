@@ -42,6 +42,23 @@ just add-test --sample             # paste a sample's input and output as the ne
 
 `scratch/` is gitignored. Every recipe except `commit` works in. Problems can be moved from `scratch/` to `problems/` and then committed.
 
+`just limit 3` sets the current problem's time limit to 3s, and `just limit 3 512` also sets the memory limit in MB. When a problem has no time limit, `just test` and `just info` say that the default is being used.
+
+## Contests
+
+```sh
+just listen --contest           # then click Competitive Companion on the contest page
+just listen --contest r1000     # the same, with a shorter folder name
+just contest bapsoj a-k -t 1    # by hand, for sites Competitive Companion doesn't support
+cd scratch/bapsoj/c && just limit 3
+```
+
+Contest problems go to `scratch/<contest>/<letter>/`, so switching problems is `cd ../c`. `meta.json` records the contest in `contest`.
+
+`just listen --contest` names the folder after the contest Competitive Companion sends, e.g. `codeforces_round_1000_div_2`, unless a name is given. The letter comes from the problem's name ("A. ", "B - "); names without one use the slugified name instead.
+
+`just contest <name> <count|range>` creates `scratch/<name>/a`, `b`, … for a count (`5`) or a letter range (`a-k`, or `c` for one problem). Problems that already exist are skipped, so a wider range adds only the missing ones. `-t` takes one time limit for every problem it creates; `just limit` sets a different one for a single problem. Samples are added with `just add-test --sample`.
+
 ## Problem directories
 
 ```text

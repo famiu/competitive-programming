@@ -1,13 +1,18 @@
 #!/usr/bin/env python3
 """Receive problems from the Competitive Companion browser extension.
 
-Usage: listen.py [--once]
+Usage: listen.py [--once] [--contest [name]]
 
 Listens on CP_LISTEN_PORT (default 1327, one of Competitive Companion's default ports) and
 writes each received problem to problems/<site>/<id>_<slug>/: meta.json, the samples as
 tests/NN.in and tests/NN.out, and solution.cpp from the template when it does not exist.
 Other files in the problem directory are left alone. Problem directories are printed on
 stdout as they are written. With --once, exits after the first problem or contest.
+
+With --contest, problems go to scratch/<contest>/<letter>/ instead, and meta.json records the
+contest. <contest> is <name> when given, else the contest name Competitive Companion sends,
+without the judge's name. <letter> is the problem's index from its name ("A. ", "B - "), or
+the slugified name when it has none.
 """
 
 import json
@@ -22,6 +27,7 @@ from urllib.parse import urlparse
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 PROBLEMS_DIR = REPO_ROOT / "problems"
+SCRATCH_DIR = REPO_ROOT / "scratch"
 TEMPLATE = REPO_ROOT / "templates" / "solution.cpp"
 
 PLATFORMS = {
@@ -65,11 +71,26 @@ def slugify(text: str) -> str:
     return re.sub(r"[-\s]+", "_", text).strip("_")
 
 
+INDEX_PATTERN = r"^([A-Za-z0-9]+)\s*(?:\.|-|–)\s+"
+
+
 def problem_dir(meta: dict) -> Path:
     """problems/<site>/<id>_<slug>, where the slug is the name without its index ("D. ", "A - ")."""
-    title = re.sub(r"^[A-Za-z0-9]+\s*(?:\.|-|–)\s+", "", meta["name"])
+    title = re.sub(INDEX_PATTERN, "", meta["name"])
     parts = [p for p in (problem_id(meta["site"], meta["url"]), slugify(title)) if p]
     return PROBLEMS_DIR / meta["site"] / ("_".join(parts) or "problem")
+
+
+def contest_name(data: dict) -> str:
+    """The contest from Competitive Companion's group, e.g. "Codeforces - Round 1000" -> round_1000."""
+    group = data.get("group", "")
+    return slugify(group.split(" - ", 1)[1] if " - " in group else group)
+
+
+def contest_problem_dir(contest: str, meta: dict) -> Path:
+    """scratch/<contest>/<index>, or scratch/<contest>/<slug> when the name has no index."""
+    m = re.match(INDEX_PATTERN, meta["name"])
+    return SCRATCH_DIR / contest / ((m.group(1).lower() if m else slugify(meta["name"])) or "problem")
 
 
 def make_meta(url: str, name: str, time_limit_ms: float, memory_limit_mb: float, interactive: bool, judge: str = "") -> dict:
@@ -90,10 +111,19 @@ def write_meta(directory: Path, meta: dict) -> None:
     (directory / "meta.json").write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
 
 
-def write_problem(data: dict) -> Path:
+def write_problem(data: dict, contest: str | None) -> Path:
+    """Writes the problem to problems/, or to scratch/<contest>/ when contest is not None ("" uses
+    the contest name from the data)."""
     judge = data.get("group", "").split(" - ")[0]
     meta = make_meta(data["url"], data["name"], data["timeLimit"], data["memoryLimit"], data.get("interactive", False), judge)
-    directory = problem_dir(meta)
+    if contest is None:
+        directory = problem_dir(meta)
+    else:
+        contest = contest or contest_name(data)
+        if not contest:
+            raise ValueError("no contest name received; pass one with --contest <name>")
+        meta["contest"] = contest
+        directory = contest_problem_dir(contest, meta)
     tests = directory / "tests"
     tests.mkdir(parents=True, exist_ok=True)
 
@@ -120,6 +150,7 @@ def log(message: str) -> None:
 
 class Handler(BaseHTTPRequestHandler):
     once = False
+    contest: str | None = None
     batches: dict[str, int] = {}
 
     def do_POST(self) -> None:
@@ -128,7 +159,7 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         try:
             data = json.loads(body)
-            directory = write_problem(data)
+            directory = write_problem(data, self.contest)
         except (ValueError, KeyError, OSError) as exc:
             log(f"error: could not save problem: {exc}")
             return
@@ -146,7 +177,18 @@ class Handler(BaseHTTPRequestHandler):
 
 
 def main() -> None:
-    Handler.once = "--once" in sys.argv[1:]
+    usage = "usage: just listen [--once] [--contest [name]]"
+    args = sys.argv[1:]
+    while args:
+        arg = args.pop(0)
+        if arg == "--once":
+            Handler.once = True
+        elif arg == "--contest":
+            Handler.contest = args.pop(0) if args and not args[0].startswith("-") else ""
+            if "/" in Handler.contest or Handler.contest in (".", ".."):
+                sys.exit(f"error: invalid contest name: {Handler.contest}")
+        else:
+            sys.exit(usage)
     port = int(os.environ.get("CP_LISTEN_PORT", "1327"))
     try:
         server = HTTPServer(("127.0.0.1", port), Handler)

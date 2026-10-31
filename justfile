@@ -15,7 +15,7 @@ default:
 
 # ── Problems ──────────────────────────────────────────────────────────────────
 
-# Receive problems from Competitive Companion and print their dirs; --once stops after one problem or contest
+# Receive problems from Competitive Companion and print their dirs; --once stops after one problem or contest, --contest [name] writes to scratch/<contest>/<letter>
 [group('problems')]
 listen *args:
     @'{{ scripts }}/listen.py' "$@"
@@ -24,6 +24,17 @@ listen *args:
 [group('problems')]
 new *args:
     @'{{ scripts }}/scaffold.sh' new "$@"
+
+# Create scratch/<name>/<letter> for each problem of a contest and print them: contest name count|range [-t seconds]
+[group('problems')]
+contest *args:
+    @'{{ scripts }}/scaffold.sh' contest "$@"
+
+# Set the problem's time limit, and optionally its memory limit: limit [dir] seconds [megabytes]
+[group('problems')]
+[no-cd]
+limit *args:
+    @'{{ scripts }}/limit.sh' "$@"
 
 # Open the problem's page in the browser
 [group('problems')]

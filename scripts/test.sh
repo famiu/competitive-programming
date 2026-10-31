@@ -109,5 +109,9 @@ printf '%s───────────────────────�
 summary="${GREEN}${passed} passed${RESET}"
 ((failed > 0)) && summary+=", ${RED}${failed} failed${RESET}"
 ((unchecked > 0)) && summary+=", ${CYAN}${unchecked} without expected output${RESET}"
-printf '%s  %s(time limit %ss)%s\n' "$summary" "$DIM" "$limit" "$RESET"
+if time_limit_set "$dir"; then
+    printf '%s  %s(time limit %ss)%s\n' "$summary" "$DIM" "$limit" "$RESET"
+else
+    printf '%s  %s(time limit %ss: default, not set; use `just limit`)%s\n' "$summary" "$YELLOW" "$limit" "$RESET"
+fi
 ((failed == 0))
