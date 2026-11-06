@@ -11,7 +11,7 @@ My solutions to competitive programming problems, plus the tooling to fetch, bui
 just doctor   # check that the required tools are installed
 ```
 
-Install Competitive Companion in the browser. It sends problems to port 1327 by default, which is what `just listen` uses (`CP_LISTEN_PORT` to change it).
+Install Competitive Companion in the browser. `just listen` uses its default port, 1327 (`CP_LISTEN_PORT` to change it).
 
 ## Usage
 
@@ -28,24 +28,21 @@ just commit        # commit a newly solved problem as "feat: solve <site>/<probl
 just commit-update # commit changes to it later, as "<type>: update <site>/<problem>"
 ```
 
-`just listen` writes each problem it receives to `problems/<site>/<id>_<name>/` (e.g. `codeforces/2200d_portal`) with `meta.json`, the samples and `solution.cpp` from `templates/solution.cpp`, and prints the directory. Clicking on a contest page sends the whole contest. Without `--once` it keeps listening until Ctrl-C. Receiving a problem again only replaces `meta.json` and the numbered samples.
+Problems go to `problems/<site>/<id>_<name>/`. Clicking on a contest page sends the whole contest, and without `--once`, `just listen` keeps listening. Receiving a problem again only replaces `meta.json` and the numbered samples.
 
-The template reads a test count and calls `solve()` once per test. For problems with a single test, comment out `cin >> t;`.
+For problems with a single test, comment out `cin >> t;` in the solution.
 
-Recipes find the problem by walking up from the current directory to the nearest folder that contains `solution.cpp` or `meta.json`, so they work from anywhere inside a problem, including `tests/`. Passing a directory as the first argument selects a different problem. `just` with no arguments lists every recipe.
+Recipes work from anywhere inside a problem, or take a problem directory as their first argument. `just` lists every recipe.
 
 ## Problems set up by hand
 
 ```sh
 cd "$(just new -t 1 scratch/foo)"  # solution.cpp, and meta.json with a 1s time limit
 just add-test --sample             # paste a sample's input and output as the next tests/NN
+just limit 3 512                   # set the time limit to 3s and the memory limit to 512 MB
 ```
 
-`just new` takes paths relative to the repository root and refuses directories that already have `solution.cpp`. Without `-t`, tests use `DEFAULT_TIME_LIMIT`.
-
-`scratch/` is gitignored. Every recipe except `commit` works in. `just archive` moves a problem from `scratch/` to `problems/`; see [Contests](#contests).
-
-`just limit 3` sets the current problem's time limit to 3s, and `just limit 3 512` also sets the memory limit in MB. When a problem has no time limit, `just test` and `just info` say that the default is being used.
+`just new` paths are relative to the repository root. `scratch/` is gitignored.
 
 ## Contests
 
@@ -53,14 +50,9 @@ just add-test --sample             # paste a sample's input and output as the ne
 just listen --contest           # then click Competitive Companion on the contest page
 just listen --contest r1000     # the same, with a shorter folder name
 just contest bapsoj a-k -t 1    # by hand, for sites Competitive Companion doesn't support
-cd scratch/bapsoj/c && just limit 3
 ```
 
-Contest problems go to `scratch/<contest>/<letter>/`, so switching problems is `cd ../c`. `meta.json` records the contest in `contest`.
-
-`just listen --contest` names the folder after the contest Competitive Companion sends, e.g. `codeforces_round_1000_div_2`, unless a name is given. The letter comes from the problem's name ("A. ", "B - "); names without one use the slugified name instead.
-
-`just contest <name> <count|range>` creates `scratch/<name>/a`, `b`, … for a count (`5`) or a letter range (`a-k`, or `c` for one problem). Problems that already exist are skipped, so a wider range adds only the missing ones. `-t` takes one time limit for every problem it creates; `just limit` sets a different one for a single problem. Samples are added with `just add-test --sample`.
+Contest problems go to `scratch/<contest>/<letter>/`, so switching problems is `cd ../c`. `just contest` takes a count (`5`) or a letter range (`a-k`) and skips problems that already exist.
 
 ```sh
 just archive                          # move this problem to problems/<site>/<id>_<name>
@@ -68,9 +60,7 @@ just archive bapsoj "Perfect Couple"  # when meta.json has no URL to name it fro
 just archive --commit                 # then commit it, as `just commit` does
 ```
 
-`just archive` names the problem the same way `just listen` does, from `meta.json`'s URL, site and name. A site and name given on the command line replace the ones in `meta.json`. It keeps `contest` in `meta.json`, removes the contest folder once it is empty, and prints the new directory, so `cd "$(just archive)"` follows the problem. Unsolved problems stay in `scratch/`.
-
-`just ship` stops without copying when a test fails, a test has no expected output, there are no tests, or the problem is interactive; `--force` copies anyway. It also lists leftover `freopen`, `cerr`, `clog` and `#define LOCAL` lines, but still copies.
+`cd "$(just archive)"` follows the problem to its new directory.
 
 ## Problem directories
 
@@ -97,15 +87,11 @@ just test-debug    # sanitizers + dbg(), 3x time limit
 just watch         # re-run tests on every change (needs entr)
 ```
 
-`dbg(a, b)` prints the values with their names to stderr in debug builds (`include/debug.hpp`) and compiles to nothing anywhere else.
+`dbg(a, b)` prints the values with their names in debug builds and compiles to nothing otherwise. Debug builds also print an `input check:` warning when the input is read past its end or not fully read.
 
-Debug builds also print an `input check:` warning when the input is read past its end or not fully read.
+Verdicts are `PASS`, `WA`, `TLE`, `RE`, and `OUT` (no `.out` file, output is just printed).
 
-Verdicts are `PASS`, `WA`, `TLE`, `RE`, and `OUT` (no `.out` file, output is just printed). The time limit comes from `meta.json`, or 2s if there isn't one.
-
-Output is compared line by line, ignoring trailing whitespace. Put `tokens` or `float 1e-6` in `.compare` for token-wise or float-tolerant comparison.
-
-For problems with multiple valid answers, `just gen-checker` creates `checker.cpp`, using the helpers in `include/checker.hpp`. It's called as `checker <input> <output> <answer>` (testlib order) and accepts by exiting 0. `checker.py` or an executable `checker` work too.
+Output is compared line by line, ignoring trailing whitespace. Put `tokens` or `float 1e-6` in `.compare` for token-wise or float-tolerant comparison. For problems with multiple valid answers, `just gen-checker` creates `checker.cpp`, called as `checker <input> <output> <answer>` and accepting by exiting 0.
 
 ## Stress testing
 
@@ -120,9 +106,7 @@ just stress 1000   # or for a fixed number of iterations
 just stress-save   # keep the failing case as tests/stress_NN
 ```
 
-`just stress` first checks brute.cpp against the tests and that the generator's output varies with the seed, and treats `input check:` warnings as failures.
-
-The generator gets the iteration number as its seed, and `include/gen.hpp` has the random helpers (`rnd`, `rnd_vec`, `rnd_tree`, `rnd_graph`, `out`, …). Failures go to `.stress/`; `just run .stress/failing.in` reproduces them. `just gen 7 | just run` runs the solution on one generated input. `just add-test` fills in an expected output left empty by running `brute.cpp`.
+`just stress` first checks brute.cpp against the tests and that the generator's output varies with the seed, and treats `input check:` warnings as failures. The generator gets the iteration number as its seed; `include/gen.hpp` has the random helpers. `just run .stress/failing.in` reproduces a failure, and `just gen 7 | just run` runs the solution on one generated input.
 
 ## Other recipes
 
