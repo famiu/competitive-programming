@@ -59,6 +59,30 @@
     "reveal": "always"
   },
   {
+    "label": "cp: test-brute",
+    "command": "just",
+    "args": [
+      "test-brute"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
+    "label": "cp: gen",
+    "command": "just",
+    "args": [
+      "gen"
+    ],
+    "cwd": "$ZED_DIRNAME",
+    "save": "all",
+    "use_new_terminal": false,
+    "allow_concurrent_runs": false,
+    "reveal": "always"
+  },
+  {
     "label": "cp: stress",
     "command": "just",
     "args": [

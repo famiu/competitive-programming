@@ -30,7 +30,7 @@ inputs=("$dir"/tests/*.in)
 if ((${#inputs[@]} == 0)); then
     refuse "no tests to check"
 else
-    "$SCRIPTS_DIR/test.sh" release "$dir" || refuse "tests failed"
+    "$SCRIPTS_DIR/test.sh" release solution "$dir" || refuse "tests failed"
     unchecked=0
     for input in "${inputs[@]}"; do
         [[ -f "${input%.in}.out" ]] || ((unchecked += 1))

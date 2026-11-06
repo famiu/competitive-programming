@@ -1,16 +1,18 @@
 #!/usr/bin/env bash
-# Usage: test.sh <debug|release> [dir] [case...]
+# Usage: test.sh <debug|release> <solution|brute> [dir] [case...]
 #
-# Builds solution.cpp and runs it on tests/*.in. Cases are names or glob patterns matched
-# against test names (e.g. `02`, `custom_*`), separated by spaces or commas; the default is
-# every test. Tests without a matching .out file are run and their output is shown.
-# Exits 1 when any test fails.
+# Builds solution.cpp or brute.cpp and runs it on tests/*.in. Cases are names or glob patterns
+# matched against test names (e.g. `02`, `custom_*`), separated by spaces or commas; the default
+# is every test. Tests without a matching .out file are run and their output is shown.
+# Exits 1 when any test fails. A brute that is slow but correct passes; only a brute that is
+# killed counts as TLE.
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
 source "$SCRIPTS_DIR/check.sh"
 
-mode="$1"
-shift
+mode="$1" program="$2"
+shift 2
+[[ "$program" == solution || "$program" == brute ]] || die "invalid program: $program"
 parse_problem_args "$@"
 dir="$PROBLEM_DIR"
 
@@ -38,8 +40,9 @@ for p in "${patterns[@]}"; do
     ((matched)) || die "no test matches '$p' in $dir/tests"
 done
 
-sol_bin="$(bin_path "$mode" "$dir" solution)"
-build "$mode" "$dir/solution.cpp" "$sol_bin" "$dir"
+[[ -f "$dir/$program.cpp" ]] || die "$dir/$program.cpp not found; \`just gen-stress\` creates brute.cpp"
+bin="$(bin_path "$mode" "$dir" "$program")"
+build "$mode" "$dir/$program.cpp" "$bin" "$dir"
 setup_checker "$dir"
 
 limit="$(time_limit "$dir" "$mode")"
@@ -53,9 +56,10 @@ for input in "${inputs[@]}"; do
     ((idx += 1))
     name="$(basename "${input%.in}")"
     expected="${input%.in}.out"
-    run_timed "$kill" "$input" "$tmp/out" "$tmp/err" "$sol_bin"
+    run_timed "$kill" "$input" "$tmp/out" "$tmp/err" "$bin"
     elapsed="$RUN_ELAPSED"
-    slow="$(awk -v e="$elapsed" -v l="$limit" 'BEGIN { print (e > l) ? 1 : 0 }')"
+    slow=0
+    [[ "$program" == solution ]] && slow="$(awk -v e="$elapsed" -v l="$limit" 'BEGIN { print (e > l) ? 1 : 0 }')"
 
     verdict='' detail=''
     if ((RUN_STATUS == 124)); then

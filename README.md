@@ -99,6 +99,8 @@ just watch         # re-run tests on every change (needs entr)
 
 `dbg(a, b)` prints the values with their names to stderr in debug builds (`include/debug.hpp`) and compiles to nothing anywhere else.
 
+Debug builds also print an `input check:` warning when the input is read past its end or not fully read.
+
 Verdicts are `PASS`, `WA`, `TLE`, `RE`, and `OUT` (no `.out` file, output is just printed). The time limit comes from `meta.json`, or 2s if there isn't one.
 
 Output is compared line by line, ignoring trailing whitespace. Put `tokens` or `float 1e-6` in `.compare` for token-wise or float-tolerant comparison.
@@ -109,12 +111,18 @@ For problems with multiple valid answers, `just gen-checker` creates `checker.cp
 
 ```sh
 just gen-stress    # create brute.cpp and generator.cpp
+just test-brute    # check brute.cpp against the tests
+just gen           # preview the inputs for seeds 1-5
+just gen 1-20      # or for a range of seeds
+just gen 7         # print the input for seed 7
 just stress        # run until something fails
 just stress 1000   # or for a fixed number of iterations
 just stress-save   # keep the failing case as tests/stress_NN
 ```
 
-The generator gets the iteration number as its seed, and `include/gen.hpp` has the random helpers (`rnd`, `rnd_vec`, `rnd_tree`, `rnd_graph`, `out`, …). Failures go to `.stress/`; `just run .stress/failing.in` reproduces them. `just add-test` fills in an expected output left empty by running `brute.cpp`.
+`just stress` first checks brute.cpp against the tests and that the generator's output varies with the seed, and treats `input check:` warnings as failures.
+
+The generator gets the iteration number as its seed, and `include/gen.hpp` has the random helpers (`rnd`, `rnd_vec`, `rnd_tree`, `rnd_graph`, `out`, …). Failures go to `.stress/`; `just run .stress/failing.in` reproduces them. `just gen 7 | just run` runs the solution on one generated input. `just add-test` fills in an expected output left empty by running `brute.cpp`.
 
 ## Other recipes
 

@@ -38,10 +38,12 @@ run_timed "$STRESS_KILL" "$tmp/empty" "$tmp/input" "$tmp/generator.err" "$GEN_BI
 run_timed "$STRESS_KILL" "$tmp/input" "$tmp/solution.out" "$tmp/solution.err" "$SOL_BIN"
 ((RUN_STATUS == 124)) && fail solution-tle solution
 ((RUN_STATUS != 0)) && fail solution-re solution
+grep -q '^input check:' "$tmp/solution.err" && fail solution-input solution
 
 run_timed "$STRESS_KILL" "$tmp/input" "$tmp/brute.out" "$tmp/brute.err" "$BRUTE_BIN"
 ((RUN_STATUS == 124)) && fail brute-tle brute
 ((RUN_STATUS != 0)) && fail brute-re brute
+grep -q '^input check:' "$tmp/brute.err" && fail brute-input brute
 
 check_output "$tmp/input" "$tmp/brute.out" "$tmp/solution.out" "$tmp/report" || fail mismatch solution
 exit 0

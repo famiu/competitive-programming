@@ -16,7 +16,7 @@ while true; do
     find "$dir" "$dir/tests" -maxdepth 1 -type f \
         \( -name '*.cpp' -o -name '*.py' -o -name '*.in' -o -name '*.out' \
         -o -name '.compare' -o -name '.compile_flags' -o -name checker \) 2> /dev/null |
-        entr -d -c "$SCRIPTS_DIR/test.sh" release "$dir" "${PROBLEM_ARGS[@]}" || status=$?
+        entr -d -c "$SCRIPTS_DIR/test.sh" release solution "$dir" "${PROBLEM_ARGS[@]}" || status=$?
     # entr exits with 2 when a new file appears in a watched directory.
     ((status == 2)) || exit "$status"
 done

@@ -96,13 +96,13 @@ run *args:
 [group('run')]
 [no-cd]
 test *args:
-    @'{{ scripts }}/test.sh' release "$@"
+    @'{{ scripts }}/test.sh' release solution "$@"
 
 # Like test, but with a debug build (sanitizers, LOCAL defined, 3x time limit)
 [group('run')]
 [no-cd]
 test-debug *args:
-    @'{{ scripts }}/test.sh' debug "$@"
+    @'{{ scripts }}/test.sh' debug solution "$@"
 
 # Re-run test whenever sources, tests or checkers change (requires entr)
 [group('run')]
@@ -123,6 +123,18 @@ bench *args:
 [no-cd]
 gen-stress *args:
     @'{{ scripts }}/scaffold.sh' stress "$@"
+
+# Like test-debug, but for brute.cpp; a slow brute fails only when it is killed
+[group('stress')]
+[no-cd]
+test-brute *args:
+    @'{{ scripts }}/test.sh' debug brute "$@"
+
+# Print generator.cpp's input for one seed, or preview a range of seeds (default 1-5): gen [dir] [seed | first-last]
+[group('stress')]
+[no-cd]
+gen *args:
+    @'{{ scripts }}/gen.sh' "$@"
 
 # Compare solution.cpp with brute.cpp on generated inputs: stress [dir] [iterations]
 [group('stress')]

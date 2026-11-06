@@ -5,6 +5,10 @@
 # iteration number as its seed. Runs until the first failure, or for <iterations> when given.
 # The failing case is saved to .stress/ in the problem directory.
 #
+# Before the first iteration, brute.cpp is checked against the tests that have an expected
+# output, except stress_* tests, whose expected output came from brute.cpp, and generator.cpp
+# must not print the same input for every one of the first seeds.
+#
 # STRESS_JOBS sets the number of parallel iterations (default: number of CPUs).
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
@@ -39,6 +43,61 @@ rm -rf "$STRESS_DIR"
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT
 
+# Tests the brute does not finish within this many seconds are skipped.
+BRUTE_CHECK_SECONDS=1
+
+check_brute() {
+    local input name checked=0
+    for input in "$dir"/tests/*.in; do
+        [[ -f "$input" && -f "${input%.in}.out" ]] || continue
+        name="$(basename "${input%.in}")"
+        [[ "$name" == stress_* ]] && continue
+        run_timed "$BRUTE_CHECK_SECONDS" "$input" "$tmp/brute.out" "$tmp/brute.err" "$BRUTE_BIN"
+        if ((RUN_STATUS == 124)); then
+            warn "brute.cpp took over ${BRUTE_CHECK_SECONDS}s on test $name; skipped it"
+            continue
+        fi
+        if ((RUN_STATUS != 0)); then
+            error "brute.cpp fails on test $name ($(describe_status "$RUN_STATUS"))"
+            if [[ -s "$tmp/brute.err" ]]; then
+                section "--- stderr (brute) ---"
+                print_capped "$tmp/brute.err" stderr
+            fi
+            exit 1
+        fi
+        if grep -q '^input check:' "$tmp/brute.err"; then
+            error "brute.cpp does not read test $name correctly"
+            print_capped "$tmp/brute.err" stderr
+            exit 1
+        fi
+        if ! check_output "$input" "${input%.in}.out" "$tmp/brute.out" "$tmp/report"; then
+            error "brute.cpp gives a wrong answer on test $name"
+            section "--- input ---"
+            print_block "$input"
+            show_report "$tmp/report"
+            exit 1
+        fi
+        ((checked += 1))
+    done
+    ((checked > 0)) || warn "brute.cpp was not checked against any test with an expected output"
+}
+check_brute
+
+# A generator that ignores its seed prints the same input every time. Generator failures are
+# left to the iterations, which report them in full.
+check_variety() {
+    local seed
+    local -A seen=()
+    : > "$tmp/empty"
+    for seed in {1..20}; do
+        run_timed "$STRESS_KILL" "$tmp/empty" "$tmp/input" "$tmp/generator.err" "$GEN_BIN" "$seed"
+        ((RUN_STATUS == 0)) || return 0
+        seen["$(md5sum < "$tmp/input")"]=1
+    done
+    ((${#seen[@]} > 1)) || die "generator.cpp printed the same input for seeds 1 to 20; does it call seed(argc, argv)?"
+}
+check_variety
+
 # run_batch <first> <last>: returns non-zero when an iteration failed.
 run_batch() {
     local status=0
@@ -60,6 +119,8 @@ report_failure() {
         mismatch) printf '%sMISMATCH%s with seed %s%s%s\n' "$BOLD$RED" "$RESET" "$BOLD" "$seed" "$RESET" ;;
         *-tle) printf '%sFAIL%s %s%s TLE%s (killed after %ss) with seed %s%s%s\n' "$RED" "$RESET" \
             "$YELLOW" "${type%-tle}" "$RESET" "$STRESS_KILL" "$BOLD" "$seed" "$RESET" ;;
+        *-input) printf '%sFAIL%s %s%s input check%s with seed %s%s%s\n' "$RED" "$RESET" \
+            "$RED" "${type%-input}" "$RESET" "$BOLD" "$seed" "$RESET" ;;
         *-re) printf '%sFAIL%s %s%s RE%s (%s) with seed %s%s%s\n' "$RED" "$RESET" \
             "$RED" "${type%-re}" "$RESET" "$(describe_status "$status")" "$BOLD" "$seed" "$RESET" ;;
     esac

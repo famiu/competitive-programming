@@ -3,6 +3,10 @@
 //
 // Values are printed with std::format when possible. Otherwise ranges, pairs and tuples are
 // printed element by element, and other types use operator<< if they define it.
+//
+// When the program exits, a line starting with "input check:" is printed to stderr if cin read
+// past the end of the input, failed to parse a value, or left tokens unread. `just stress`
+// treats that line as a failure. The check is skipped when stdin is a terminal.
 #pragma once
 
 #include <bits/stdc++.h>
@@ -91,5 +95,23 @@ void print(std::string_view file, int line, std::string_view names, const Args&.
 	out += "]\n";
 	std::cerr << out;
 }
+
+struct input_check
+{
+	~input_check()
+	{
+		if (isatty(STDIN_FILENO)) return;
+		if (std::cin.fail()) {
+			if (std::cin.eof())
+				std::cerr << "input check: read past the end of the input\n";
+			else
+				std::cerr << "input check: a value could not be read from the input\n";
+			return;
+		}
+		if (std::string next; std::cin >> next) std::cerr << "input check: input not fully read, next token: " << next << '\n';
+	}
+};
+
+inline input_check input_check_at_exit;
 
 }  // namespace dbg_detail
