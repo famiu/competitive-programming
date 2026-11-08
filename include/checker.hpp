@@ -2,123 +2,39 @@
 //   checker <input> <output> <answer>
 // where <output> is the solution's output and <answer> is the expected output (testlib order).
 //
-// Exit codes: 0 accepts, 1 is a wrong answer and 2 is a checker error, e.g. when the input or
-// the expected answer cannot be read. Messages go to stderr and are shown on rejection.
+// init(argc, argv) opens the three files as `in`, `out` and `ans`, read with >> (see judge.hpp).
+// Exiting with tokens left in `out` is a wrong answer, unless the checker already gave a verdict.
 #pragma once
 
 #include <bits/stdc++.h>
+#include "judge.hpp"
 
-template <class... Args>
-[[noreturn]] void wrong(std::format_string<Args...> fmt, Args&&... args)
+// The solution's output.
+inline Stream out("out");
+
+inline void init(int argc, char** argv)
 {
-	std::println(std::cerr, "wrong answer: {}", std::format(fmt, std::forward<Args>(args)...));
-	std::exit(1);
+	judge_detail::role = "checker";
+	if (argc != 4) fail("usage: {} <input> <output> <answer>", argc > 0 ? argv[0] : "checker");
+	in.open(argv[1], false);
+	out.open(argv[2], true);
+	ans.open(argv[3], false);
 }
 
-// Names the program in the messages of fail(); interactor.hpp sets it to "interactor".
-inline std::string_view judge_name = "checker";
+namespace judge_detail {
 
-template <class... Args>
-[[noreturn]] void fail(std::format_string<Args...> fmt, Args&&... args)
+struct leftover_check
 {
-	std::println(std::cerr, "{} error: {}", judge_name, std::format(fmt, std::forward<Args>(args)...));
-	std::exit(2);
-}
-
-// Rejects with a wrong answer unless `cond` holds.
-template <class... Args>
-void ensure(bool cond, std::format_string<Args...> fmt, Args&&... args)
-{
-	if (!cond) wrong(fmt, std::forward<Args>(args)...);
-}
-
-// True when `actual` is within `eps` of `expected`, absolutely or relatively.
-inline bool close_enough(long double expected, long double actual, long double eps = 1e-6L)
-{
-	return std::abs(expected - actual) <= eps * std::max(1.0L, std::abs(expected));
-}
-
-// Reads whitespace-separated tokens from a file or a stream. Problems reading the solution's
-// output are wrong answers; problems reading the input or the expected answer are checker errors.
-class Stream
-{
-public:
-	Stream(const char* path, std::string name, bool is_output)
-		: owned_(std::make_unique<std::ifstream>(path)), in_(owned_.get()), name_(std::move(name)),
-		  is_output_(is_output)
+	~leftover_check()
 	{
-		if (!*owned_) fail("cannot open {} ({})", name_, path);
-	}
-
-	Stream(std::istream& in, std::string name, bool is_output)
-		: in_(&in), name_(std::move(name)), is_output_(is_output)
-	{
-	}
-
-	// Reads one token as T (an integer, floating-point or string type).
-	template <class T>
-	T read(std::string_view what)
-	{
-		std::string token;
-		if (!(*in_ >> token)) reject("{}: expected {}, got end of file", name_, what);
-		if constexpr (std::is_convertible_v<std::string, T>) {
-			return token;
-		} else {
-			T value{};
-			auto [end, ec] = std::from_chars(token.data(), token.data() + token.size(), value);
-			if (ec != std::errc() || end != token.data() + token.size())
-				reject("{}: expected {}, got \"{}\"", name_, what, token);
-			return value;
+		if (done || !out.is_open()) return;
+		if (std::string token = out.next_token(); !token.empty()) {
+			std::println(std::cerr, "wrong answer: out: unexpected extra output starting with \"{}\"", token);
+			std::_Exit(1);
 		}
 	}
-
-	// Reads one value and checks that it is in [lo, hi].
-	template <class T>
-	T read(T lo, T hi, std::string_view what)
-	{
-		T value = read<T>(what);
-		if (value < lo || value > hi) reject("{}: {} is {}, outside [{}, {}]", name_, what, value, lo, hi);
-		return value;
-	}
-
-	// Reads n values.
-	template <class T>
-	std::vector<T> read_vec(int n, std::string_view what)
-	{
-		std::vector<T> v(n);
-		for (auto& x : v) x = read<T>(what);
-		return v;
-	}
-
-	// Rejects anything left after the expected tokens.
-	void expect_eof()
-	{
-		std::string token;
-		if (*in_ >> token) reject("{}: unexpected extra output starting with \"{}\"", name_, token);
-	}
-
-private:
-	template <class... Args>
-	[[noreturn]] void reject(std::format_string<Args...> fmt, Args&&... args)
-	{
-		std::string message = std::format(fmt, std::forward<Args>(args)...);
-		if (is_output_) wrong("{}", message);
-		fail("{}", message);
-	}
-
-	std::unique_ptr<std::ifstream> owned_;
-	std::istream* in_;
-	std::string name_;
-	bool is_output_;
 };
 
-struct Files
-{
-	Stream input, output, answer;
-};
+inline leftover_check leftover_check_at_exit;
 
-inline Files open_files(int argc, char** argv)
-{
-	if (argc != 4) fail("usage: {} <input> <output> <answer>", argc > 0 ? argv[0] : "checker");
-	return {{argv[1], "input", false}, {argv[2], "output", true}, {argv[3], "answer", false}};
-}
+}  // namespace judge_detail

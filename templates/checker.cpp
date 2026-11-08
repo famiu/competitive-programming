@@ -2,14 +2,20 @@
 #include "checker.hpp"
 using namespace std;
 
+void check()
+{
+	// read the test case from in
+	long long expected, actual;
+	ans >> expected;
+	out >> actual;
+	if (actual != expected) wrong("expected {}, got {}", expected, actual);
+}
+
 int main(int argc, char** argv)
 {
-	auto [input, output, answer] = open_files(argc, argv);
-
-	// Typically: read the input and the expected answer, then check that the output is valid
-	// and as good as the expected answer.
-	auto expected = answer.read<long long>("the answer");
-	auto actual = output.read<long long>("the answer");
-	ensure(actual == expected, "expected {}, got {}", expected, actual);
-	output.expect_eof();
+	init(argc, argv);
+	int t = 1;
+	in >> t;
+	while (t--)
+		check();
 }

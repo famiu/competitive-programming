@@ -3,33 +3,51 @@
 // with its stdin connected to the solution's output and its stdout to the solution's input.
 // <answer> is the test's .out file, passed only when it exists.
 //
-// Exit codes are those of checker.hpp: 0 accepts, 1 is a wrong answer and 2 is an interactor
-// error. Messages go to stderr and are shown on rejection. Reading past the end of the
-// solution's output, which happens when it exits early, is a wrong answer.
+// init(argc, argv) opens the input as `in`, the answer as `ans` and the solution's output as
+// `sol`, read with >> (see judge.hpp). Reading past the end of `sol`, which happens when the
+// solution exits early, is a wrong answer. send() writes to the solution.
 #pragma once
 
 #include <bits/stdc++.h>
-#include "checker.hpp"
+#include "judge.hpp"
 
-// Sends one line to the solution and flushes it.
-template <class... Args>
-void send(std::format_string<Args...> fmt, Args&&... args)
+// The solution's output.
+inline Stream sol("sol");
+
+inline void init(int argc, char** argv)
 {
-	std::println(std::cout, fmt, std::forward<Args>(args)...);
-	std::cout.flush();
+	judge_detail::role = "interactor";
+	if (argc != 2 && argc != 3) fail("usage: {} <input> [<answer>]", argc > 0 ? argv[0] : "interactor");
+	in.open(argv[1], false);
+	if (argc == 3)
+		ans.open(argv[2], false);
+	else
+		ans.set_missing("the test has no .out file");
+	sol.open(std::cin, true);
 }
 
-struct Interaction
-{
-	Stream input, solution;
-	std::optional<Stream> answer;
-};
+namespace judge_detail {
 
-inline Interaction open_interaction(int argc, char** argv)
+template <class T>
+void put(std::string& line, const T& value)
 {
-	judge_name = "interactor";
-	if (argc != 2 && argc != 3) fail("usage: {} <input> [<answer>]", argc > 0 ? argv[0] : "interactor");
-	std::optional<Stream> answer;
-	if (argc == 3) answer.emplace(argv[2], "answer", false);
-	return {{argv[1], "input", false}, {std::cin, "output", true}, std::move(answer)};
+	if constexpr (std::ranges::input_range<T> && !std::convertible_to<T, std::string_view>) {
+		for (const auto& element : value) put(line, element);
+	} else {
+		if (!line.empty()) line += ' ';
+		std::format_to(std::back_inserter(line), "{}", value);
+	}
+}
+
+}  // namespace judge_detail
+
+// Sends the arguments to the solution on one line, separated by spaces, and flushes it.
+// Containers are flattened, so send(n, v) sends n followed by the elements of v.
+template <class... Args>
+void send(const Args&... args)
+{
+	std::string line;
+	(judge_detail::put(line, args), ...);
+	std::println(std::cout, "{}", line);
+	std::cout.flush();
 }

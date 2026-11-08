@@ -2,28 +2,32 @@
 #include "checker.hpp"
 using namespace std;
 
+void check()
+{
+	long long l, r;
+	in >> l >> r;
+
+	long long ax, ay;
+	ans >> ax >> ay;
+	bool exists = ax != -1;
+
+	long long x, y;
+	out >> x >> y;
+	if (x == -1 && y == -1) {
+		if (exists) wrong("printed -1 -1, but a valid pair in [{}, {}] exists", l, r);
+		return;
+	}
+	if (!(l <= x && x < y && y <= r)) wrong("need {} <= x < y <= {}, got x = {}, y = {}", l, r, x, y);
+	long long m = x / gcd(x, y) * y;
+	if (!(l <= m && m <= r)) wrong("lcm({}, {}) = {} is outside [{}, {}]", x, y, m, l, r);
+	if (!exists) fail("{} {} is valid, but the answer is -1 -1", x, y);
+}
+
 int main(int argc, char** argv)
 {
-	auto [input, output, answer] = open_files(argc, argv);
-
-	int t = input.read<int>("t");
-	for (int tc = 1; tc <= t; tc++) {
-		auto l = input.read<long long>("l");
-		auto r = input.read<long long>("r");
-
-		bool exists = answer.read<long long>("x") != -1;
-		answer.read<long long>("y");
-
-		auto x = output.read<long long>("x");
-		auto y = output.read<long long>("y");
-		if (x == -1 && y == -1) {
-			ensure(!exists, "test {}: printed -1 -1, but a valid pair in [{}, {}] exists", tc, l, r);
-			continue;
-		}
-		ensure(l <= x && x < y && y <= r, "test {}: need {} <= x < y <= {}, got x = {}, y = {}", tc, l, r, x, y);
-		long long m = x / gcd(x, y) * y;
-		ensure(l <= m && m <= r, "test {}: lcm({}, {}) = {} is outside [{}, {}]", tc, x, y, m, l, r);
-		if (!exists) fail("test {}: {} {} is valid, but the answer is -1 -1", tc, x, y);
-	}
-	output.expect_eof();
+	init(argc, argv);
+	int t = 1;
+	in >> t;
+	while (t--)
+		check();
 }
