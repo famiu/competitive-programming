@@ -107,7 +107,7 @@ just stress 1000   # or for a fixed number of iterations
 just stress-save   # keep the failing case as tests/stress_NN
 ```
 
-`just stress` first checks brute.cpp against the tests and that the generator's output varies with the seed, and treats `input check:` warnings as failures. The generator gets the iteration number as its seed; `include/gen.hpp` has the random helpers. `just run .stress/failing.in` reproduces a failure, and `just gen 7 | just run` runs the solution on one generated input.
+`just stress` first checks brute.cpp against the tests and that the generator's output varies with the seed, and treats `input check:` warnings as failures. The generator gets the iteration number as its seed. `just run .stress/failing.in` reproduces a failure, and `just gen 7 | just run` runs the solution on one generated input.
 
 ## Interactive problems
 
@@ -116,6 +116,10 @@ just gen-interactor   # mark the problem interactive and create interactor.cpp
 ```
 
 `just listen` does this automatically for problems Competitive Companion marks interactive; tests are then inputs for `interactor.cpp`, which judges the solution. For stress testing, `interactor.cpp` takes the place of `brute.cpp`, so `just gen-stress` creates only `generator.cpp`.
+
+## Helpers
+
+[`include/README.md`](include/README.md) lists the helpers that generators, checkers and interactors can use.
 
 ## Other recipes
 
