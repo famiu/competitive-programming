@@ -2,7 +2,8 @@
 # Usage: stress_save.sh [dir]
 #
 # Copies the failing case from the last `just stress` run into tests/ as stress_NN.in and
-# stress_NN.out. The expected output is brute.cpp's output on that input.
+# stress_NN.out. The expected output is brute.cpp's output on that input. Interactive problems
+# get only stress_NN.in, since interactor.cpp judges the solution.
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
 
@@ -13,6 +14,16 @@ stress_dir="$dir/.stress"
 [[ -f "$stress_dir/failing.in" ]] || die "no failing stress case in $stress_dir; run \`just stress\` first"
 type="$(cat "$stress_dir/failing.type" 2> /dev/null || true)"
 [[ "$type" != generator-* ]] || die "the last stress run failed in the generator; there is no input to save"
+
+if [[ "$type" == interactive ]]; then
+    mkdir -p "$dir/tests"
+    n=1
+    while [[ -e "$(printf '%s/tests/stress_%02d.in' "$dir" "$n")" ]]; do ((n += 1)); done
+    base="$(printf '%s/tests/stress_%02d' "$dir" "$n")"
+    cp "$stress_dir/failing.in" "$base.in"
+    printf '%s\n' "$base.in"
+    exit 0
+fi
 
 tmp="$(mktemp -d)"
 trap 'rm -rf -- "$tmp"' EXIT

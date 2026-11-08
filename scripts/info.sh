@@ -17,7 +17,7 @@ if [[ -f "$dir/meta.json" ]]; then
     done
     ml="$(meta_get "$dir" memory_limit)"
     [[ -n "$ml" ]] && printf '  %-14s %s MB\n' "Memory limit" "$ml"
-    [[ "$(jq -r '.interactive' "$dir/meta.json")" == true ]] && printf '  %-14s %s\n' "Interactive" "yes"
+    is_interactive "$dir" && printf '  %-14s %s\n' "Interactive" "yes"
 else
     printf '%s%s%s %s(no meta.json)%s\n' "$BOLD" "$(basename "$dir")" "$RESET" "$DIM" "$RESET"
 fi
@@ -31,7 +31,14 @@ shopt -s nullglob
 tests=("$dir"/tests/*.in)
 printf '  %-14s %d\n' "Tests" "${#tests[@]}"
 
-if [[ -x "$dir/checker" && -f "$dir/checker" ]]; then
+if is_interactive "$dir"; then
+    if [[ -f "$dir/interactor.cpp" ]]; then
+        printf '  %-14s %s\n' "Interactor" interactor.cpp
+    else
+        printf '  %-14s %smissing; `just gen-interactor` creates it%s\n' "Interactor" "$YELLOW" "$RESET"
+    fi
+    exit 0
+elif [[ -x "$dir/checker" && -f "$dir/checker" ]]; then
     checker=checker
 elif [[ -f "$dir/checker.py" ]]; then
     checker=checker.py

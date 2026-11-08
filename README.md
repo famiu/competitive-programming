@@ -74,6 +74,7 @@ problems/<site>/<problem>/
 │   └── stress_01.in, .out        from `just stress-save`
 ├── brute.cpp, generator.cpp      from `just gen-stress`
 ├── checker.cpp | checker.py | checker
+├── interactor.cpp                from `just gen-interactor` or `just listen`
 ├── .compare          built-in comparison mode
 ├── .compile_flags    extra compiler flags, one or more per line
 └── .no-lint          skips `just lint`
@@ -107,6 +108,14 @@ just stress-save   # keep the failing case as tests/stress_NN
 ```
 
 `just stress` first checks brute.cpp against the tests and that the generator's output varies with the seed, and treats `input check:` warnings as failures. The generator gets the iteration number as its seed; `include/gen.hpp` has the random helpers. `just run .stress/failing.in` reproduces a failure, and `just gen 7 | just run` runs the solution on one generated input.
+
+## Interactive problems
+
+```sh
+just gen-interactor   # mark the problem interactive and create interactor.cpp
+```
+
+`just listen` does this automatically for problems Competitive Companion marks interactive; tests are then inputs for `interactor.cpp`, which judges the solution. For stress testing, `interactor.cpp` takes the place of `brute.cpp`, so `just gen-stress` creates only `generator.cpp`.
 
 ## Other recipes
 

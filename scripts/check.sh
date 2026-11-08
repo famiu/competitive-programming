@@ -8,6 +8,8 @@
 #
 # <output> is the solution's output and <answer> is the expected output, as in testlib.
 # Checkers accept by exiting 0; anything they print is shown when they reject.
+#
+# Interactive problems are judged by interactor.cpp instead, through interact.py.
 
 # setup_checker <problem-dir>
 # Sets and exports CHECKER_KIND, CHECKER_PATH, COMPARE_MODE and COMPARE_EPS.
@@ -112,4 +114,49 @@ compare_tokens() {
             }
         }
     ' "$1" "$2"
+}
+
+# ── Interactive problems ──────────────────────────────────────────────────────
+
+# setup_interactor <problem-dir>: builds interactor.cpp and sets and exports INTERACTOR_BIN.
+setup_interactor() {
+    local dir="$1"
+    [[ -f "$dir/interactor.cpp" ]] || die "$dir is interactive but has no interactor.cpp; \`just gen-interactor\` creates it"
+    require_cmd python3 "needed to run interactive problems"
+    INTERACTOR_BIN="$(bin_path release "$dir" interactor)"
+    build release "$dir/interactor.cpp" "$INTERACTOR_BIN" "$dir"
+    export INTERACTOR_BIN
+}
+
+# run_interactive <kill-after> <limit> <input> <solution> <transcript> <solution-stderr> <interactor-stderr>
+# Runs <solution> against INTERACTOR_BIN on <input>, passing <input>'s .out file as the answer
+# when it exists. Sets RUN_VERDICT (PASS, WA, TLE, ILE, RE or FAIL), RUN_DETAIL, RUN_STATUS,
+# RUN_ELAPSED (the solution's CPU seconds) and RUN_MAXRSS (kilobytes). With <transcript> set to
+# --live, the interaction and both programs' stderr go to the terminal as they happen.
+run_interactive() {
+    local kill="$1" limit="$2" input="$3" solution="$4" transcript="$5" sol_err="$6" int_err="$7"
+    local -a args=(--kill "$kill" --limit "$limit")
+    if [[ "$transcript" == --live ]]; then
+        args+=(--live)
+    else
+        args+=(--transcript "$transcript" --solution-err "$sol_err" --interactor-err "$int_err")
+    fi
+    args+=("$solution" "$INTERACTOR_BIN" "$input")
+    [[ "$input" == *.in && -f "${input%.in}.out" ]] && args+=("${input%.in}.out")
+    local result
+    result="$(python3 "$SCRIPTS_DIR/interact.py" "${args[@]}")" || die "interact.py failed"
+    read -r RUN_VERDICT RUN_STATUS RUN_ELAPSED RUN_MAXRSS RUN_DETAIL <<< "$result"
+}
+
+# show_interaction <transcript> <interactor-stderr>: prints the interactor's messages and the end
+# of the interaction.
+show_interaction() {
+    if [[ -s "$2" ]]; then
+        section "--- interactor ---"
+        print_capped "$2" "interactor output"
+    fi
+    if [[ -s "$1" ]]; then
+        section "--- interaction (> solution, < interactor) ---"
+        print_tail "$1" interaction
+    fi
 }

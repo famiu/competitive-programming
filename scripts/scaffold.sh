@@ -3,6 +3,7 @@
 #        scaffold.sh contest name count|range [-t seconds]
 #        scaffold.sh stress [dir]
 #        scaffold.sh checker [dir]
+#        scaffold.sh interactor [dir]
 #
 # `new` creates each directory with solution.cpp and prints the directories on stdout. Relative
 # paths are resolved from the repository root. Nothing is created when any directory already
@@ -14,8 +15,9 @@
 # that already have solution.cpp are skipped, so a wider range adds only the missing ones. -t
 # takes a single time limit for every problem created; `just limit` changes one problem's.
 #
-# `stress` adds brute.cpp and generator.cpp; `checker` adds checker.cpp. Existing files are
-# never overwritten.
+# `stress` adds brute.cpp and generator.cpp, or only generator.cpp for interactive problems;
+# `checker` adds checker.cpp. `interactor` marks the problem interactive in meta.json and adds
+# interactor.cpp. Existing files are never overwritten.
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
 
@@ -129,12 +131,22 @@ case "$kind" in
     stress)
         parse_problem_args "$@"
         # brute.cpp starts from the solution template so that both share the same helpers.
-        copy_template solution.cpp "$PROBLEM_DIR/brute.cpp"
+        is_interactive "$PROBLEM_DIR" || copy_template solution.cpp "$PROBLEM_DIR/brute.cpp"
         copy_template generator.cpp "$PROBLEM_DIR/generator.cpp"
         ;;
     checker)
         parse_problem_args "$@"
         copy_template checker.cpp "$PROBLEM_DIR/checker.cpp"
+        ;;
+    interactor)
+        parse_problem_args "$@"
+        require_cmd jq "needed to write meta.json"
+        meta="$PROBLEM_DIR/meta.json"
+        [[ -f "$meta" ]] || jq -n --arg name "${PROBLEM_DIR##*/}" '{name: $name}' > "$meta"
+        jq '.interactive = true' "$meta" > "$meta.tmp"
+        mv "$meta.tmp" "$meta"
+        copy_template interactor.cpp "$PROBLEM_DIR/interactor.cpp"
+        if [[ -f "$PROBLEM_DIR/brute.cpp" ]]; then note "brute.cpp is not used for interactive problems"; fi
         ;;
     *) die "invalid scaffold kind: $kind" ;;
 esac

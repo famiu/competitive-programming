@@ -9,6 +9,9 @@
 # output, except stress_* tests, whose expected output came from brute.cpp, and generator.cpp
 # must not print the same input for every one of the first seeds.
 #
+# For interactive problems, interactor.cpp judges the solution on each generated input instead,
+# and brute.cpp is not used.
+#
 # STRESS_JOBS sets the number of parallel iterations (default: number of CPUs).
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
@@ -22,8 +25,12 @@ iterations="${PROBLEM_ARGS[0]:-}"
 jobs="${STRESS_JOBS:-$(nproc)}"
 [[ "$jobs" =~ ^[1-9][0-9]*$ ]] || die "STRESS_JOBS must be a positive integer"
 
-for f in solution.cpp brute.cpp generator.cpp; do
-    [[ -f "$dir/$f" ]] || die "$dir/$f not found; \`just gen-stress\` creates brute.cpp and generator.cpp"
+export STRESS_INTERACTIVE=''
+is_interactive "$dir" && STRESS_INTERACTIVE=1
+programs=(solution.cpp generator.cpp)
+[[ -n "$STRESS_INTERACTIVE" ]] || programs+=(brute.cpp)
+for f in "${programs[@]}"; do
+    [[ -f "$dir/$f" ]] || die "$dir/$f not found; \`just gen-stress\` creates it"
 done
 
 # Solution and brute use debug builds so that sanitizers catch errors; the generator only
@@ -33,9 +40,9 @@ SOL_BIN="$(bin_path debug "$dir" solution)"
 BRUTE_BIN="$(bin_path debug "$dir" brute)"
 GEN_BIN="$(bin_path release "$dir" generator)"
 build debug "$dir/solution.cpp" "$SOL_BIN" "$dir"
-build debug "$dir/brute.cpp" "$BRUTE_BIN" "$dir"
+[[ -n "$STRESS_INTERACTIVE" ]] || build debug "$dir/brute.cpp" "$BRUTE_BIN" "$dir"
 build release "$dir/generator.cpp" "$GEN_BIN" "$dir"
-setup_checker "$dir"
+if [[ -n "$STRESS_INTERACTIVE" ]]; then setup_interactor "$dir"; else setup_checker "$dir"; fi
 STRESS_KILL="$(time_limit "$dir" debug)"
 STRESS_DIR="$dir/.stress"
 rm -rf "$STRESS_DIR"
@@ -81,7 +88,7 @@ check_brute() {
     done
     ((checked > 0)) || warn "brute.cpp was not checked against any test with an expected output"
 }
-check_brute
+[[ -n "$STRESS_INTERACTIVE" ]] || check_brute
 
 # A generator that ignores its seed prints the same input every time. Generator failures are
 # left to the iterations, which report them in full.
@@ -123,6 +130,13 @@ report_failure() {
             "$RED" "${type%-input}" "$RESET" "$BOLD" "$seed" "$RESET" ;;
         *-re) printf '%sFAIL%s %s%s RE%s (%s) with seed %s%s%s\n' "$RED" "$RESET" \
             "$RED" "${type%-re}" "$RESET" "$(describe_status "$status")" "$BOLD" "$seed" "$RESET" ;;
+        interactive)
+            local verdict detail=''
+            verdict="$(< "$STRESS_DIR/failing.verdict")"
+            [[ -s "$STRESS_DIR/failing.detail" ]] && detail=" ($(< "$STRESS_DIR/failing.detail"))"
+            printf '%sFAIL%s %s%s%s%s with seed %s%s%s\n' "$RED" "$RESET" "$BOLD" "$verdict" "$RESET" "$detail" \
+                "$BOLD" "$seed" "$RESET"
+            ;;
     esac
 
     if [[ "$type" != generator-* ]]; then
@@ -130,9 +144,10 @@ report_failure() {
         print_block "$STRESS_DIR/failing.in"
     fi
     [[ -f "$STRESS_DIR/failing.report" ]] && show_report "$STRESS_DIR/failing.report"
+    [[ "$type" == interactive ]] && show_interaction "$STRESS_DIR/failing.transcript" "$STRESS_DIR/failing.interactor"
     if [[ -f "$STRESS_DIR/failing.stderr" ]]; then
         local program="${type%-*}"
-        [[ "$type" == mismatch ]] && program=solution
+        [[ "$type" == mismatch || "$type" == interactive ]] && program=solution
         section "--- stderr ($program) ---"
         print_capped "$STRESS_DIR/failing.stderr" stderr
     fi

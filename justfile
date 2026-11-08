@@ -118,7 +118,7 @@ bench *args:
 
 # ── Stress testing ────────────────────────────────────────────────────────────
 
-# Create brute.cpp and generator.cpp
+# Create brute.cpp and generator.cpp (only generator.cpp for interactive problems)
 [group('stress')]
 [no-cd]
 gen-stress *args:
@@ -153,6 +153,12 @@ stress-save *args:
 [no-cd]
 gen-checker *args:
     @'{{ scripts }}/scaffold.sh' checker "$@"
+
+# Mark the problem interactive and create interactor.cpp, which judges the solution
+[group('stress')]
+[no-cd]
+gen-interactor *args:
+    @'{{ scripts }}/scaffold.sh' interactor "$@"
 
 # ── Code ──────────────────────────────────────────────────────────────────────
 

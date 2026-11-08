@@ -22,6 +22,12 @@ fail() {
         [[ -f "$tmp/brute.out" ]] && cp "$tmp/brute.out" "$STRESS_DIR/failing.expected"
         [[ -s "$tmp/$2.err" ]] && cp "$tmp/$2.err" "$STRESS_DIR/failing.stderr"
         [[ -s "$tmp/report" ]] && cp "$tmp/report" "$STRESS_DIR/failing.report"
+        [[ -s "$tmp/transcript" ]] && cp "$tmp/transcript" "$STRESS_DIR/failing.transcript"
+        [[ -s "$tmp/interactor.err" ]] && cp "$tmp/interactor.err" "$STRESS_DIR/failing.interactor"
+        if [[ "$1" == interactive ]]; then
+            printf '%s\n' "$RUN_VERDICT" > "$STRESS_DIR/failing.verdict"
+            printf '%s\n' "$RUN_DETAIL" > "$STRESS_DIR/failing.detail"
+        fi
         printf '%s\n' "$seed" > "$STRESS_DIR/failing.seed"
         printf '%s\n' "$RUN_STATUS" > "$STRESS_DIR/failing.status"
         printf '%s\n' "$1" > "$STRESS_DIR/failing.type"
@@ -34,6 +40,13 @@ fail() {
 run_timed "$STRESS_KILL" "$tmp/empty" "$tmp/input" "$tmp/generator.err" "$GEN_BIN" "$seed"
 ((RUN_STATUS == 124)) && fail generator-tle generator
 ((RUN_STATUS != 0)) && fail generator-re generator
+
+if [[ -n "$STRESS_INTERACTIVE" ]]; then
+    run_interactive "$STRESS_KILL" "$STRESS_KILL" "$tmp/input" "$SOL_BIN" "$tmp/transcript" "$tmp/solution.err" \
+        "$tmp/interactor.err"
+    [[ "$RUN_VERDICT" == PASS ]] || fail interactive solution
+    exit 0
+fi
 
 run_timed "$STRESS_KILL" "$tmp/input" "$tmp/solution.out" "$tmp/solution.err" "$SOL_BIN"
 ((RUN_STATUS == 124)) && fail solution-tle solution

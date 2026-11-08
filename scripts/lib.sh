@@ -130,6 +130,11 @@ meta_get() {
     jq -r --arg k "$2" '.[$k] // empty' "$meta"
 }
 
+# is_interactive <problem-dir>: succeeds when meta.json marks the problem interactive.
+is_interactive() {
+    [[ "$(meta_get "$1" interactive)" == true ]]
+}
+
 # time_limit <problem-dir> <mode>: prints the time limit in seconds for a build mode.
 # Debug builds get three times the limit because of -O0 and sanitizers.
 time_limit() {
@@ -173,6 +178,15 @@ run_timed() {
     local end="$EPOCHREALTIME"
     local us=$((10#${end/./} - 10#${start/./}))
     printf -v RUN_ELAPSED '%d.%03d' $((us / 1000000)) $((us % 1000000 / 1000))
+}
+
+# print_tail <file> <noun>: prints at most the last DIFF_PREVIEW_LINES lines of <file> to stderr.
+print_tail() {
+    local file="$1" noun="$2" lines
+    lines="$(wc -l < "$file")"
+    ((lines > DIFF_PREVIEW_LINES)) &&
+        printf '... %s truncated (%d lines total, showing the last %d)\n' "$noun" "$lines" "$DIFF_PREVIEW_LINES" >&2
+    tail -n "$DIFF_PREVIEW_LINES" "$file" >&2
 }
 
 # describe_status <status>: "exit code 3" or "signal SEGV".

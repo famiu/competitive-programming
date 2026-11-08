@@ -5,15 +5,19 @@
 # reporting the best wall time and the peak memory against the problem's limits.
 # Exits 1 when the program fails or exceeds a limit.
 # <input> is a file or a test name; the default is the largest tests/*.in.
+# Interactive problems run against interactor.cpp, and their time is the solution's CPU time.
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
+source "$SCRIPTS_DIR/check.sh"
 
 runs="${BENCH_RUNS:-3}"
 [[ "$runs" =~ ^[1-9][0-9]*$ ]] || die "BENCH_RUNS must be a positive integer"
-[[ -x /usr/bin/time ]] || die "/usr/bin/time (GNU time) is not installed; run \`just doctor\` for details"
-
 parse_problem_args "$@"
 dir="$PROBLEM_DIR"
+interactive=0
+is_interactive "$dir" && interactive=1
+((interactive)) || [[ -x /usr/bin/time ]] ||
+    die "/usr/bin/time (GNU time) is not installed; run \`just doctor\` for details"
 (( ${#PROBLEM_ARGS[@]} <= 1 )) || die "usage: just bench [dir] [input]"
 
 input=''
@@ -34,6 +38,7 @@ fi
 
 sol_bin="$(bin_path release "$dir" solution)"
 build release "$dir/solution.cpp" "$sol_bin" "$dir"
+((interactive)) && setup_interactor "$dir"
 
 limit="$(time_limit "$dir" release)"
 kill="$(awk -v l="$limit" 'BEGIN { k = l * 5; if (k < 10) k = 10; print k }')"
@@ -47,19 +52,35 @@ times=() peak_kb=0 status=0
 for ((i = 1; i <= runs; i++)); do
     status=0
     [[ -t 2 ]] && printf '%s  run %d/%d...%s' "$DIM" "$i" "$runs" "$RESET" >&2
-    /usr/bin/time -f '%e %M' -o "$tmp/time" timeout "$kill" "$sol_bin" < "$input" > /dev/null 2> "$tmp/err" || status=$?
+    if ((interactive)); then
+        run_interactive "$kill" "$limit" "$input" "$sol_bin" "$tmp/transcript" "$tmp/err" "$tmp/interactor.err"
+        t="$RUN_ELAPSED" kb="$RUN_MAXRSS"
+        [[ "$RUN_VERDICT" == PASS || "$RUN_VERDICT" == TLE ]] || status=1
+    else
+        /usr/bin/time -f '%e %M' -o "$tmp/time" timeout "$kill" "$sol_bin" < "$input" > /dev/null 2> "$tmp/err" || status=$?
+        read -r t kb < <(tail -n 1 "$tmp/time")
+    fi
     [[ -t 2 ]] && printf '\r\e[K' >&2
-    read -r t kb < <(tail -n 1 "$tmp/time")
     times+=("$t")
     ((kb > peak_kb)) && peak_kb="$kb"
     ((status == 0)) || break
 done
 
 best="$(printf '%s\n' "${times[@]}" | sort -n | head -n 1)"
-printf '  %-13s %s%ss%s  %s(runs: %s)%s\n' "Wall time" "$BOLD" "$best" "$RESET" "$DIM" "${times[*]}" "$RESET"
+time_label="Wall time"
+((interactive)) && time_label="CPU time"
+printf '  %-13s %s%ss%s  %s(runs: %s)%s\n' "$time_label" "$BOLD" "$best" "$RESET" "$DIM" "${times[*]}" "$RESET"
 printf '  %-13s %s MB\n' "Peak memory" "$(awk -v kb="$peak_kb" 'BEGIN { printf "%.1f", kb / 1024 }')"
 
-if ((status == 124)); then
+if ((interactive && status != 0)); then
+    printf '  %-13s %s%s%s%s\n' "Verdict" "$RED" "$RUN_VERDICT" "$RESET" "${RUN_DETAIL:+  ($RUN_DETAIL)}"
+    show_interaction "$tmp/transcript" "$tmp/interactor.err"
+    if [[ -s "$tmp/err" ]]; then
+        section "--- stderr ---"
+        print_capped "$tmp/err" stderr
+    fi
+    exit 1
+elif ((status == 124)); then
     printf '  %-13s %skilled after %ss%s\n' "Exit" "$YELLOW" "$kill" "$RESET"
     exit 1
 elif ((status != 0)); then

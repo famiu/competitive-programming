@@ -6,7 +6,8 @@
 //
 // When the program exits, a line starting with "input check:" is printed to stderr if cin read
 // past the end of the input, failed to parse a value, or left tokens unread. `just stress`
-// treats that line as a failure. The check is skipped when stdin is a terminal.
+// treats that line as a failure. The check is skipped when stdin is a terminal, and when
+// CP_INTERACTIVE is set, as it is for a solution running against an interactor.
 #pragma once
 
 #include <bits/stdc++.h>
@@ -100,7 +101,7 @@ struct input_check
 {
 	~input_check()
 	{
-		if (isatty(STDIN_FILENO)) return;
+		if (isatty(STDIN_FILENO) || std::getenv("CP_INTERACTIVE")) return;
 		if (std::cin.fail()) {
 			if (std::cin.eof())
 				std::cerr << "input check: read past the end of the input\n";

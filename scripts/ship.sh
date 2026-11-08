@@ -2,8 +2,8 @@
 # Usage: ship.sh [dir] [--force]
 #
 # Runs every test on the release build and copies solution.cpp to the clipboard only when all of
-# them pass. Tests without an expected output, interactive problems and problems without tests
-# cannot pass, so they also stop it. --force copies anyway once the tests have run. Leftover
+# them pass. Tests without an expected output and problems without tests also stop it, except
+# that the tests of interactive problems need no expected output. --force copies anyway once the tests have run. Leftover
 # freopen, cerr, clog and `#define LOCAL` lines are reported but do not stop it.
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
@@ -31,13 +31,14 @@ if ((${#inputs[@]} == 0)); then
     refuse "no tests to check"
 else
     "$SCRIPTS_DIR/test.sh" release solution "$dir" || refuse "tests failed"
-    unchecked=0
-    for input in "${inputs[@]}"; do
-        [[ -f "${input%.in}.out" ]] || ((unchecked += 1))
-    done
-    ((unchecked == 0)) || refuse "$unchecked test(s) have no expected output"
+    if ! is_interactive "$dir"; then
+        unchecked=0
+        for input in "${inputs[@]}"; do
+            [[ -f "${input%.in}.out" ]] || ((unchecked += 1))
+        done
+        ((unchecked == 0)) || refuse "$unchecked test(s) have no expected output"
+    fi
 fi
-[[ "$(meta_get "$dir" interactive)" == true ]] && refuse "interactive problems cannot be checked by the tests"
 
 leftovers='\b(freopen|cerr|clog)\b|^[[:space:]]*#[[:space:]]*define[[:space:]]+LOCAL\b'
 if grep -qE "$leftovers" "$dir/solution.cpp"; then

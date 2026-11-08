@@ -9,6 +9,10 @@ tests/NN.in and tests/NN.out, and solution.cpp from the template when it does no
 Other files in the problem directory are left alone. Problem directories are printed on
 stdout as they are written. With --once, exits after the first problem or contest.
 
+Interactive problems get interactor.cpp from its template when it does not exist, and no
+samples: the samples of interactive problems show an interaction, not an input for the
+interactor.
+
 With --contest, problems go to scratch/<contest>/<letter>/ instead, and meta.json records the
 contest. <contest> is <name> when given, else the contest name Competitive Companion sends,
 without the judge's name. <letter> is the problem's index from its name ("A. ", "B - "), or
@@ -29,6 +33,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 PROBLEMS_DIR = REPO_ROOT / "problems"
 SCRATCH_DIR = REPO_ROOT / "scratch"
 TEMPLATE = REPO_ROOT / "templates" / "solution.cpp"
+INTERACTOR_TEMPLATE = REPO_ROOT / "templates" / "interactor.cpp"
 
 PLATFORMS = {
     "atcoder": "AtCoder",
@@ -128,19 +133,23 @@ def write_problem(data: dict, contest: str | None) -> Path:
     tests.mkdir(parents=True, exist_ok=True)
 
     # Samples are numbered NN; custom_* and stress_* tests are kept.
-    for path in tests.iterdir():
-        if path.suffix in (".in", ".out") and path.stem.isdigit() and path.is_file():
-            path.unlink()
-    for i, test in enumerate(data.get("tests", []), 1):
-        (tests / f"{i:02d}.in").write_text(test["input"], encoding="utf-8")
-        (tests / f"{i:02d}.out").write_text(test["output"], encoding="utf-8")
+    if not meta["interactive"]:
+        for path in tests.iterdir():
+            if path.suffix in (".in", ".out") and path.stem.isdigit() and path.is_file():
+                path.unlink()
+        for i, test in enumerate(data.get("tests", []), 1):
+            (tests / f"{i:02d}.in").write_text(test["input"], encoding="utf-8")
+            (tests / f"{i:02d}.out").write_text(test["output"], encoding="utf-8")
 
     write_meta(directory, meta)
     solution = directory / "solution.cpp"
     if not solution.exists():
         shutil.copyfile(TEMPLATE, solution)
     if meta["interactive"]:
-        log(f"warning: {meta['name']} is interactive; `just test` cannot judge it")
+        interactor = directory / "interactor.cpp"
+        if not interactor.exists():
+            shutil.copyfile(INTERACTOR_TEMPLATE, interactor)
+        log(f"note: {meta['name']} is interactive; write interactor.cpp and add tests with `just add-test`")
     return directory
 
 

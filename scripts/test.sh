@@ -6,6 +6,9 @@
 # is every test. Tests without a matching .out file are run and their output is shown.
 # Exits 1 when any test fails. A brute that is slow but correct passes; only a brute that is
 # killed counts as TLE.
+#
+# For interactive problems, each test is the input of interactor.cpp, which judges the solution;
+# a .out file is optional and passed to it as the answer. Times are the solution's CPU time.
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
 source "$SCRIPTS_DIR/check.sh"
@@ -40,10 +43,16 @@ for p in "${patterns[@]}"; do
     ((matched)) || die "no test matches '$p' in $dir/tests"
 done
 
+interactive=0
+if is_interactive "$dir"; then
+    interactive=1
+    [[ "$program" == solution ]] || die "brute.cpp is not used for interactive problems; interactor.cpp judges the solution"
+fi
+
 [[ -f "$dir/$program.cpp" ]] || die "$dir/$program.cpp not found; \`just gen-stress\` creates brute.cpp"
 bin="$(bin_path "$mode" "$dir" "$program")"
 build "$mode" "$dir/$program.cpp" "$bin" "$dir"
-setup_checker "$dir"
+if ((interactive)); then setup_interactor "$dir"; else setup_checker "$dir"; fi
 
 limit="$(time_limit "$dir" "$mode")"
 kill="$(kill_after "$limit")"
@@ -56,6 +65,30 @@ for input in "${inputs[@]}"; do
     ((idx += 1))
     name="$(basename "${input%.in}")"
     expected="${input%.in}.out"
+    if ((interactive)); then
+        run_interactive "$kill" "$limit" "$input" "$bin" "$tmp/transcript" "$tmp/err" "$tmp/interactor.err"
+        verdict="$RUN_VERDICT" detail="$RUN_DETAIL" elapsed="$RUN_ELAPSED"
+        case "$verdict" in
+            PASS) color="$GREEN" ;;
+            TLE | ILE) color="$YELLOW" ;;
+            *) color="$RED" ;;
+        esac
+        printf '[%d/%d] %s%-4s%s %s  %s%ss%s' "$idx" "$total" "$color" "$verdict" "$RESET" "$name" "$DIM" "$elapsed" "$RESET"
+        [[ -n "$detail" ]] && printf '  %s(%s)%s' "$DIM" "$detail" "$RESET"
+        printf '\n'
+        if [[ "$verdict" == PASS ]]; then
+            ((passed += 1))
+            continue
+        fi
+        ((failed += 1))
+        show_interaction "$tmp/transcript" "$tmp/interactor.err"
+        if [[ -s "$tmp/err" ]]; then
+            section "--- stderr ---"
+            print_capped "$tmp/err" stderr
+        fi
+        echo >&2
+        continue
+    fi
     run_timed "$kill" "$input" "$tmp/out" "$tmp/err" "$bin"
     elapsed="$RUN_ELAPSED"
     slow=0

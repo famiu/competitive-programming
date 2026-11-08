@@ -8,6 +8,9 @@
 #
 # With --sample, creates the next sample, tests/NN.in and tests/NN.out, instead. A sample
 # needs an expected output and never takes it from brute.cpp.
+#
+# For interactive problems, the input is interactor.cpp's input and no expected output is asked
+# for; an <output-file>, when given, becomes the answer passed to the interactor.
 set -euo pipefail
 source "$(dirname "$(realpath "${BASH_SOURCE[0]}")")/lib.sh"
 
@@ -36,9 +39,14 @@ else
 fi
 [[ -s "$tmp/in" ]] || die "the input is empty"
 
+interactive=false
+is_interactive "$dir" && interactive=true
+
 if [[ -n "$out_file" ]]; then
     [[ -f "$out_file" ]] || die "no such file: $out_file"
     cp "$out_file" "$tmp/out"
+elif $interactive; then
+    :
 elif [[ -t 0 ]]; then
     if $custom; then
         prompt="Paste the expected output, then press Ctrl-D (leave empty to"
@@ -50,7 +58,7 @@ elif [[ -t 0 ]]; then
     cat > "$tmp/out"
 fi
 
-if [[ ! -s "$tmp/out" ]]; then
+if [[ ! -s "$tmp/out" ]] && ! $interactive; then
     $custom || die "a sample needs an expected output; pass an output file or paste it"
     if [[ -f "$dir/brute.cpp" ]]; then
         brute_bin="$(bin_path debug "$dir" brute)"
